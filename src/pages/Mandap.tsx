@@ -64,6 +64,7 @@ export default function Mandap() {
         endTime: formData.endTime,
         mandapDetails: formData.mandapDetails,
         expenses: Number(formData.expenses),
+        year: new Date().getFullYear(),
         enteredBy: member?.memberId || 'ADMIN'
       };
 

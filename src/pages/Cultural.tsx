@@ -61,6 +61,7 @@ export default function Cultural() {
         performerDetails: formData.performerDetails,
         participants: formData.participants.split(',').map(s => s.trim()).filter(s => s),
         broadcastSent: false,
+        year: new Date().getFullYear(),
         enteredBy: member?.memberId || 'ADMIN'
       };
 
