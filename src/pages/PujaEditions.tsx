@@ -1,0 +1,348 @@
+import React, { useState, useEffect } from 'react';
+import Layout from '../components/layout/Layout';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { useAuth } from '../hooks/useAuth';
+import { db } from '../firebase';
+import { collection, query, getDocs, addDoc, updateDoc, doc, deleteDoc, orderBy } from 'firebase/firestore';
+import { PujaEdition } from '../types';
+import { Plus, Calendar, DollarSign, Palette, Shield, CheckCircle2, X, Save, History } from 'lucide-react';
+
+export default function PujaEditions() {
+  const { committee, member } = useAuth();
+  const { role } = useAuth();
+  const [editions, setEditions] = useState<PujaEdition[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showNewEditionForm, setShowNewEditionForm] = useState(false);
+  const [selectedEdition, setSelectedEdition] = useState<string | null>(null);
+  
+  const [formData, setFormData] = useState({
+    year: new Date().getFullYear(),
+    pujaType: '',
+    editionName: '',
+    startDate: '',
+    endDate: '',
+    committeeDesignation: '',
+    budget: '',
+    theme: ''
+  });
+
+  // Only admin can access edition management
+  const hasAccess = role === 'ADMIN';
+
+  useEffect(() => {
+    if (!committee || !hasAccess) return;
+    fetchEditions();
+  }, [committee, hasAccess]);
+
+  const fetchEditions = async () => {
+    if (!committee) return;
+    setLoading(true);
+    try {
+      const id = committee.id || committee.committeeId;
+      const q = query(collection(db, 'committees', id, 'editions'), orderBy('year', 'desc'));
+      const snap = await getDocs(q);
+      const editionsList = snap.docs.map(d => ({ id: d.id, ...d.data() } as PujaEdition));
+      setEditions(editionsList);
+      
+      // Set selected edition to the active one
+      const activeEdition = editionsList.find(e => e.isActive);
+      if (activeEdition) {
+        setSelectedEdition(activeEdition.id);
+      }
+    } catch (error) {
+      console.error('Error fetching editions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateEdition = async () => {
+    if (!committee || !formData.pujaType) return;
+    try {
+      const id = committee.id || committee.committeeId;
+      
+      // Deactivate all existing editions
+      for (const edition of editions) {
+        await updateDoc(doc(db, 'committees', id, 'editions', edition.id!), { isActive: false });
+      }
+
+      const newEdition = await addDoc(collection(db, 'committees', id, 'editions'), {
+        year: formData.year,
+        pujaType: formData.pujaType,
+        editionName: formData.editionName,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        committeeDesignation: formData.committeeDesignation,
+        budget: formData.budget ? parseFloat(formData.budget) : undefined,
+        theme: formData.theme,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        createdBy: member?.memberId || 'ADMIN'
+      });
+
+      // Update committee with current edition
+      await updateDoc(doc(db, 'committees', id), {
+        currentEditionId: newEdition.id,
+        currentYear: formData.year
+      });
+
+      // Reset form
+      setFormData({
+        year: new Date().getFullYear(),
+        pujaType: '',
+        editionName: '',
+        startDate: '',
+        endDate: '',
+        committeeDesignation: '',
+        budget: '',
+        theme: ''
+      });
+      setShowNewEditionForm(false);
+      fetchEditions();
+      alert('New puja edition created successfully');
+    } catch (error) {
+      console.error('Error creating edition:', error);
+      alert('Failed to create edition');
+    }
+  };
+
+  const handleSetCurrentEdition = async (editionId: string) => {
+    if (!committee) return;
+    try {
+      const id = committee.id || committee.committeeId;
+      
+      // Deactivate all editions
+      for (const edition of editions) {
+        await updateDoc(doc(db, 'committees', id, 'editions', edition.id!), { isActive: false });
+      }
+
+      // Activate selected edition
+      await updateDoc(doc(db, 'committees', id, 'editions', editionId), { isActive: true });
+
+      // Update committee with current edition
+      await updateDoc(doc(db, 'committees', id), {
+        currentEditionId: editionId,
+        currentYear: editions.find(e => e.id === editionId)?.year
+      });
+
+      setSelectedEdition(editionId);
+      fetchEditions();
+      alert('Current edition updated');
+    } catch (error) {
+      console.error('Error setting current edition:', error);
+      alert('Failed to set current edition');
+    }
+  };
+
+  const handleDeleteEdition = async (editionId: string) => {
+    if (!committee) return;
+    if (!confirm('Are you sure you want to delete this edition? This will not delete associated data.')) return;
+    try {
+      const id = committee.id || committee.committeeId;
+      await deleteDoc(doc(db, 'committees', id, 'editions', editionId));
+      fetchEditions();
+      alert('Edition deleted successfully');
+    } catch (error) {
+      console.error('Error deleting edition:', error);
+      alert('Failed to delete edition');
+    }
+  };
+
+  if (!hasAccess) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center">
+            <Shield className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Access Restricted</h2>
+            <p className="text-gray-500">Only Admin can manage puja editions.</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent" />
+        </div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="space-y-8">
+        <header className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Puja Editions</h1>
+            <p className="text-gray-500 font-medium font-sans">Manage yearly puja events and committee designations</p>
+          </div>
+          <Button onClick={() => setShowNewEditionForm(!showNewEditionForm)} className="h-12">
+            <Plus className="w-5 h-5 mr-2" /> Create New Edition
+          </Button>
+        </header>
+
+        {/* Create New Edition Form */}
+        {showNewEditionForm && (
+          <Card className="border-2 border-primary/20 bg-orange-50/20">
+            <h3 className="font-bold mb-4">Create New Puja Edition</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Year"
+                type="number"
+                value={formData.year}
+                onChange={(e) => setFormData({...formData, year: parseInt(e.target.value)})}
+              />
+              <Input
+                label="Puja Type"
+                placeholder="e.g., Durga, Ganesh, Kali"
+                value={formData.pujaType}
+                onChange={(e) => setFormData({...formData, pujaType: e.target.value})}
+              />
+              <Input
+                label="Edition Name (Optional)"
+                placeholder="e.g., 2024 Silver Jubilee"
+                value={formData.editionName}
+                onChange={(e) => setFormData({...formData, editionName: e.target.value})}
+              />
+              <Input
+                label="Committee Designation (Optional)"
+                placeholder="e.g., Diamond Park Puja Committee"
+                value={formData.committeeDesignation}
+                onChange={(e) => setFormData({...formData, committeeDesignation: e.target.value})}
+              />
+              <Input
+                label="Theme (Optional)"
+                placeholder="e.g., Traditional Heritage"
+                value={formData.theme}
+                onChange={(e) => setFormData({...formData, theme: e.target.value})}
+              />
+              <Input
+                label="Budget (₹)"
+                type="number"
+                placeholder="e.g., 500000"
+                value={formData.budget}
+                onChange={(e) => setFormData({...formData, budget: e.target.value})}
+              />
+              <Input
+                label="Start Date (Optional)"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+              />
+              <Input
+                label="End Date (Optional)"
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+              />
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button onClick={handleCreateEdition}>
+                <Save className="w-4 h-4 mr-2" /> Create Edition
+              </Button>
+              <Button variant="outline" onClick={() => setShowNewEditionForm(false)}>
+                <X className="w-4 h-4 mr-2" /> Cancel
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {/* Editions List */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">All Editions</h2>
+          {editions.length === 0 ? (
+            <div className="py-8 text-center text-gray-400 bg-white rounded-3xl border border-dashed border-orange-200">
+              <History className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <p>No puja editions created yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {editions.map(edition => (
+                <Card 
+                  key={edition.id} 
+                  className={`border-2 ${edition.isActive ? 'border-primary/40 bg-orange-50/30' : 'border-gray-200 bg-white'} transition-all`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${edition.isActive ? 'bg-primary' : 'bg-gray-400'}`}>
+                        <Calendar className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900">{edition.year}</h3>
+                        <p className="text-sm text-gray-500">{edition.pujaType}</p>
+                      </div>
+                    </div>
+                    {edition.isActive && (
+                      <CheckCircle2 className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    {edition.editionName && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium text-gray-700">Name:</span>
+                        <span className="text-gray-600">{edition.editionName}</span>
+                      </div>
+                    )}
+                    {edition.committeeDesignation && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium text-gray-700">Designation:</span>
+                        <span className="text-gray-600">{edition.committeeDesignation}</span>
+                      </div>
+                    )}
+                    {edition.theme && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Palette className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">{edition.theme}</span>
+                      </div>
+                    )}
+                    {edition.budget && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <DollarSign className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">₹{edition.budget.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {edition.startDate && edition.endDate && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-gray-600">
+                          {new Date(edition.startDate).toLocaleDateString()} - {new Date(edition.endDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    {!edition.isActive && (
+                      <Button 
+                        size="sm" 
+                        onClick={() => edition.id && handleSetCurrentEdition(edition.id)}
+                        className="flex-1"
+                      >
+                        Set Current
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => edition.id && handleDeleteEdition(edition.id)}
+                      className="text-red-500 border-red-200 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </Layout>
+  );
+}

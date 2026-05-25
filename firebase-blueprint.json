@@ -1,0 +1,196 @@
+{
+  "entities": {
+    "Committee": {
+      "title": "Committee",
+      "description": "Core committee profile",
+      "type": "object",
+      "properties": {
+        "committeeId": { "type": "string", "description": "Unique ID format [PUJATYPE]-[YEAR]-[CITY]-[SEQ]" },
+        "name": { "type": "string" },
+        "pujaType": { "type": "string", "enum": ["Durga", "Ganesh", "Kali", "Saraswati", "Lakshmi", "Other"] },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "pincode": { "type": "string" },
+        "pandalAddress": { "type": "string" },
+        "pandalLatLng": { "type": "object" },
+        "foundedYear": { "type": "number" },
+        "adminUID": { "type": "string" },
+        "adminEmail": { "type": "string" },
+        "adminPhone": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["committeeId", "name", "pujaType", "adminUID"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "Committee member with role",
+      "type": "object",
+      "properties": {
+        "memberId": { "type": "string", "description": "Phone in E.164 format" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string", "enum": ["Secretary", "Joint_Secretary", "Cashier", "Light_Incharge", "Pandal_Incharge", "Donation_Incharge", "Chanda_Incharge", "Visarjan_Incharge", "Cultural_Incharge", "Mandap_Incharge", "Chanda_Volunteer", "Member"] },
+        "addedAt": { "type": "string", "format": "date-time" },
+        "addedBy": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "firebaseUID": { "type": "string" }
+      },
+      "required": ["memberId", "name", "phone", "role"]
+    },
+    "ChandaEntry": {
+      "title": "Chanda Entry",
+      "description": "Record of chanda collection",
+      "type": "object",
+      "properties": {
+        "donorName": { "type": "string" },
+        "donorPhone": { "type": "string" },
+        "donorAddress": { "type": "string" },
+        "amount": { "type": "number" },
+        "collectedBy": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "year": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Approved"] },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "receiptNumber": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Large donations or sponsorships",
+      "type": "object",
+      "properties": {
+        "donorName": { "type": "string" },
+        "donorPhone": { "type": "string" },
+        "amount": { "type": "number" },
+        "donationType": { "type": "string", "enum": ["Cash", "UPI", "Cheque", "Kind", "Sponsor"] },
+        "kindDescription": { "type": "string" },
+        "estimatedValue": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "year": { "type": "number" },
+        "enteredBy": { "type": "string" },
+        "receiptNumber": { "type": "string" },
+        "receiptSent": { "type": "boolean" }
+      }
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Committee expenses",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string", "enum": ["Lighting", "Pandal", "Prasad_Bhog", "Sound", "Transport", "Printing", "Security", "Decoration", "Idol", "Visarjan", "Mandap", "Cultural", "Miscellaneous"] },
+        "amount": { "type": "number" },
+        "reason": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "year": { "type": "number" },
+        "enteredBy": { "type": "string" },
+        "enteredByRole": { "type": "string" },
+        "dependentMemberName": { "type": "string" },
+        "billPhotoURL": { "type": "string" }
+      }
+    },
+    "Inventory": {
+      "title": "Inventory",
+      "description": "Stock tracking",
+      "type": "object",
+      "properties": {
+        "module": { "type": "string", "enum": ["Lighting", "Pandal", "Visarjan", "Bhog", "Mandap"] },
+        "itemName": { "type": "string" },
+        "unit": { "type": "string" },
+        "vendorName": { "type": "string" },
+        "quantityPurchased": { "type": "number" },
+        "quantityUsed": { "type": "number" },
+        "pricePerUnit": { "type": "number" },
+        "year": { "type": "number" },
+        "enteredBy": { "type": "string" }
+      }
+    },
+    "CulturalEvent": {
+      "title": "Cultural Event",
+      "description": "Scheduled events",
+      "type": "object",
+      "properties": {
+        "eventName": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "performerDetails": { "type": "string" },
+        "broadcastSent": { "type": "boolean" },
+        "enteredBy": { "type": "string" }
+      }
+    },
+    "MandapSchedule": {
+      "title": "Mandap Schedule",
+      "description": "Puja rituals and timings",
+      "type": "object",
+      "properties": {
+        "day": { "type": "number" },
+        "date": { "type": "string", "format": "date-time" },
+        "tithi": { "type": "string" },
+        "pujaName": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "mandapDetails": { "type": "string" },
+        "expenses": { "type": "number" },
+        "enteredBy": { "type": "string" }
+      }
+    },
+    "YearlyBudget": {
+      "title": "Yearly Budget",
+      "description": "Aggregates per year",
+      "type": "object",
+      "properties": {
+        "year": { "type": "number" },
+        "plannedIncome": { "type": "number" },
+        "plannedExpense": { "type": "number" },
+        "actualIncome": { "type": "number" },
+        "actualExpense": { "type": "number" },
+        "categoryBudgets": { "type": "object" },
+        "notes": { "type": "string" }
+      }
+    },
+    "Broadcast": {
+      "title": "Broadcast",
+      "description": "Message logs",
+      "type": "object",
+      "properties": {
+        "message": { "type": "string" },
+        "sentBy": { "type": "string" },
+        "sentByRole": { "type": "string" },
+        "targetRoles": { "type": "array", "items": { "type": "string" } },
+        "sentAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["Chanda_Report", "Donation_Receipt", "Cultural_Schedule", "General"] }
+      }
+    },
+    "AuditLog": {
+      "title": "Audit Log",
+      "description": "History of actions",
+      "type": "object",
+      "properties": {
+        "who": { "type": "string" },
+        "what": { "type": "string" },
+        "when": { "type": "string", "format": "date-time" },
+        "previousValue": { "type": "object" },
+        "newValue": { "type": "object" },
+        "committeeId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/committees/{committeeId}": { "schema": "Committee", "description": "Committee settings and profile" },
+    "/committees/{committeeId}/members/{memberId}": { "schema": "Member", "description": "Members subcollection" },
+    "/committees/{committeeId}/chandaEntries/{entryId}": { "schema": "ChandaEntry", "description": "Chanda collections" },
+    "/committees/{committeeId}/donations/{entryId}": { "schema": "Donation", "description": "Large donations" },
+    "/committees/{committeeId}/expenses/{entryId}": { "schema": "Expense", "description": "Expenses ledger" },
+    "/committees/{committeeId}/inventory/{itemId}": { "schema": "Inventory", "description": "Inventory tracker" },
+    "/committees/{committeeId}/culturalEvents/{eventId}": { "schema": "CulturalEvent", "description": "Cultural schedule" },
+    "/committees/{committeeId}/mandapSchedule/{scheduleId}": { "schema": "MandapSchedule", "description": "Ritual schedule" },
+    "/committees/{committeeId}/yearlyBudget/{year}": { "schema": "YearlyBudget", "description": "Yearly stats" },
+    "/committees/{committeeId}/broadcasts/{broadcastId}": { "schema": "Broadcast", "description": "Broadcast history" },
+    "/auditLog/{logId}": { "schema": "AuditLog", "description": "Global audit logs" }
+  }
+}

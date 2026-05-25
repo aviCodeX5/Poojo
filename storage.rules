@@ -1,0 +1,30 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidCommitteeId(committeeId) {
+      return committeeId is string && committeeId.size() <= 128 && committeeId.matches("^[a-zA-Z0-9_\\-\\+]+$");
+    }
+    
+    function isMemberOf(committeeId) {
+      return isSignedIn() && (
+        request.auth.uid == get(/databases/(default)/documents/committees/$(committeeId)).data.adminUID ||
+        exists(/databases/(default)/documents/committees/$(committeeId)/members/$(request.auth.token.phone_number))
+      );
+    }
+    
+    function isAdmin(committeeId) {
+      return isSignedIn() && request.auth.uid == get(/databases/(default)/documents/committees/$(committeeId)).data.adminUID;
+    }
+    
+    // Committee bill photos
+    match /committees/{committeeId}/bills/{fileName} {
+      allow read: if isMemberOf(committeeId);
+      allow create, delete: if isMemberOf(committeeId) && isValidCommitteeId(committeeId);
+    }
+  }
+}

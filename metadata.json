@@ -1,0 +1,6 @@
+{
+  "name": "Puja Committee",
+  "description": "A committee management platform for Hindu festival organizers featuring role-based access, donation tracking, and real-time analytics.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": []
+}
