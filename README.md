@@ -17,8 +17,8 @@ View your app in AI Studio: https://ai.studio/apps/7caf588d-0c59-4ef4-9b6d-ba341
 2. Copy environment settings:
    `cp .env.example .env.local`
 3. Fill in your keys in `.env.local`:
-   - `GEMINI_API_KEY`
-   - `APP_URL`
+   - `GEMINI_API_KEY` (optional unless AI features are used)
+   - `APP_URL` (your production site URL)
    - `VITE_FIREBASE_API_KEY`
    - `VITE_FIREBASE_AUTH_DOMAIN`
    - `VITE_FIREBASE_PROJECT_ID`
@@ -47,5 +47,11 @@ This project is ready to deploy as a static site.
 ### Notes
 
 - `firebase-applet-config.json` is now ignored in source control; use environment variables instead.
+- `GEMINI_API_KEY` is optional for this app unless you add Gemini / AI features.
+- `APP_URL` should be the final production URL for your deployed site, such as:
+  - `https://your-app.pages.dev`
+  - `https://app.yourdomain.com`
 - If you use Firebase Authentication with phone login, ensure the deployed domain is authorized in Firebase and that reCAPTCHA can load successfully.
-- If Cloudflare Pages does not automatically handle client-side routing for `/:committeeId/*`, enable SPA fallback or set up the Pages route rule to serve `index.html` for all routes.
+- Cloudflare Pages SPA routing is supported using `public/_redirects` with this rule:
+  - `/* /index.html 200`
+- If you later add a custom domain, make sure that custom domain is also added to Firebase authorized domains.
