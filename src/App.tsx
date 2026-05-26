@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import Landing from './pages/Landing';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -39,42 +40,43 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/member-login" element={<MemberLogin />} />
-            
-            <Route path="/:committeeId/*" element={
-              <ProtectedRoute>
-                <Routes>
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="members" element={<Members />} />
-                  <Route path="chanda" element={<Chanda />} />
-                  <Route path="donations" element={<Donations />} />
-                  <Route path="expenses" element={<Expenses />} />
-                  <Route path="inventory" element={<Inventory />} />
-                  <Route path="cultural" element={<Cultural />} />
-                  <Route path="mandap" element={<Mandap />} />
-                  <Route path="analytics" element={<Analytics />} />
-                  <Route path="broadcasts" element={<Broadcasts />} />
-                  <Route path="audit-log" element={<AuditLog />} />
-                  <Route path="org-chart" element={<OrgChart />} />
-                  <Route path="role-management" element={<RoleManagement />} />
-                  <Route path="puja-editions" element={<PujaEditions />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="*" element={<Navigate to="dashboard" />} />
-                </Routes>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </Router>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/member-login" element={<MemberLogin />} />
+              
+              <Route path="/:committeeId/*" element={
+                <ProtectedRoute>
+                  <Routes>
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="members" element={<Members />} />
+                    <Route path="chanda" element={<Chanda />} />
+                    <Route path="donations" element={<Donations />} />
+                    <Route path="expenses" element={<Expenses />} />
+                    <Route path="inventory" element={<Inventory />} />
+                    <Route path="cultural" element={<Cultural />} />
+                    <Route path="mandap" element={<Mandap />} />
+                    <Route path="analytics" element={<Analytics />} />
+                    <Route path="broadcasts" element={<Broadcasts />} />
+                    <Route path="audit-log" element={<AuditLog />} />
+                    <Route path="org-chart" element={<OrgChart />} />
+                    <Route path="role-management" element={<RoleManagement />} />
+                    <Route path="puja-editions" element={<PujaEditions />} />
+                    <Route path="settings" element={<Settings />} />
+                    <Route path="*" element={<Navigate to="dashboard" />} />
+                  </Routes>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }
-
 
 

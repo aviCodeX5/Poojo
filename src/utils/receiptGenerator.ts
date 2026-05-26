@@ -17,7 +17,7 @@ export const generateDonationReceipt = (data: {
   // Header
   doc.setFontSize(22);
   doc.setTextColor(255, 107, 53); // Saffron
-  doc.text('PujaCommittee', 105, 20, { align: 'center' });
+  doc.text('SamitiBook', 105, 20, { align: 'center' });
   
   doc.setFontSize(18);
   doc.setTextColor(139, 26, 26); // Deep Red
@@ -50,7 +50,7 @@ export const generateDonationReceipt = (data: {
   doc.line(20, 160, 190, 160);
   doc.setFontSize(10);
   doc.text(`Thank you for your contribution to ${data.committeeName} ${data.year} ${data.pujaType}`, 105, 175, { align: 'center' });
-  doc.text('Generated via PujaCommittee', 105, 185, { align: 'center' });
+  doc.text('Generated via SamitiBook', 105, 185, { align: 'center' });
   
   return doc;
 };

@@ -6,6 +6,8 @@ import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { BrandLogo } from '../components/brand/BrandLogo';
+import { LanguageSelector } from '../components/language/LanguageSelector';
 import { Phone, ArrowRight, MessageSquare } from 'lucide-react';
 
 export default function MemberLogin() {
@@ -92,9 +94,15 @@ export default function MemberLogin() {
     <div className="min-h-screen bg-background-cream flex items-center justify-center p-6">
       <div className="max-w-md w-full">
         <div id="recaptcha-container"></div>
+        <div className="mb-8 flex items-center justify-between">
+          <Link to="/" aria-label="SamitiBook home">
+            <BrandLogo showTagline />
+          </Link>
+          <LanguageSelector />
+        </div>
         
         <div className="text-center mb-8">
-           <div className="bg-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-orange-100">
+           <div className="bg-primary rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg ring-4 ring-blue-100">
              <Phone className="w-8 h-8 text-white" />
            </div>
            <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Member Sync</h1>

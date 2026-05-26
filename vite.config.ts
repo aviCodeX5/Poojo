@@ -12,13 +12,13 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss(), VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'PujaCommittee',
-        short_name: 'PujaCommittee',
-        theme_color: '#FF6B35',
-        background_color: '#FFF8F0',
+        name: 'SamitiBook',
+        short_name: 'SamitiBook',
+        description: 'Transparent Festival Management',
+        theme_color: '#2563eb',
+        background_color: '#f6fbff',
         icons: [
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' }
+          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' }
         ]
       }
     }), cloudflare()],

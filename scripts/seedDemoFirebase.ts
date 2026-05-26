@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 const DEMO_COMMITTEE_ID = 'DUR-2026-KOL-0001';
-const DEMO_ADMIN_EMAIL = process.env.DEMO_ADMIN_EMAIL || 'demo.admin@poojo.app';
+const DEMO_ADMIN_EMAIL = process.env.DEMO_ADMIN_EMAIL || 'demo.admin@samitibook.app';
 const DEMO_ADMIN_PASSWORD = process.env.DEMO_ADMIN_PASSWORD || 'Demo@123456';
 const DEMO_ADMIN_PHONE = '+919876500001';
 

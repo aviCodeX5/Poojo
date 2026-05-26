@@ -101,7 +101,7 @@ export default function Members() {
   };
 
   const getWhatsAppLink = (m: Member) => {
-    const text = `You have been added to ${committee?.name} on PujaCommittee. Login using your mobile number: ${m.phone} at ${window.location.origin}/member-login`;
+    const text = `You have been added to ${committee?.name} on SamitiBook. Login using your mobile number: ${m.phone} at ${window.location.origin}/member-login`;
     return `https://wa.me/${m.phone.replace('+', '')}?text=${encodeURIComponent(text)}`;
   };
 

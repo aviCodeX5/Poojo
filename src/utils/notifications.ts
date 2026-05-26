@@ -93,7 +93,7 @@ export const initializeMessageListener = () => {
     if (notification) {
       // Show browser notification
       showBrowserNotification({
-        title: notification.title || 'PujaCommittee',
+        title: notification.title || 'SamitiBook',
         body: notification.body || 'New update',
         icon: notification.icon || '/favicon.ico',
         click_action: data?.click_action

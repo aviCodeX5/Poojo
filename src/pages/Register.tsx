@@ -9,6 +9,8 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import { BrandLogo } from '../components/brand/BrandLogo';
+import { LanguageSelector } from '../components/language/LanguageSelector';
 import GoogleMaps from '../components/GoogleMaps';
 import { generateCommitteeId } from '../utils/idGenerator';
 import { useAuth } from '../hooks/useAuth';
@@ -147,7 +149,7 @@ export default function Register() {
             Your committee has been registered. Please save this unique ID. You will need it to login and share it with your members.
           </p>
           
-          <div className="bg-orange-50 border-2 border-primary/20 rounded-2xl p-6 mb-8 flex flex-col items-center gap-2">
+          <div className="bg-blue-50 border-2 border-primary/20 rounded-2xl p-6 mb-8 flex flex-col items-center gap-2">
             <span className="text-xs uppercase font-bold text-primary tracking-widest">Committee ID</span>
             <span className="text-2xl font-black text-accent font-mono tracking-tight">{successData.id}</span>
             <Button variant="ghost" size="sm" onClick={copyToClipboard} className="mt-2 h-8">
@@ -166,6 +168,12 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-background-cream py-12 px-6">
       <div className="max-w-2xl mx-auto">
+        <div className="mb-8 flex items-center justify-between">
+          <Link to="/" aria-label="SamitiBook home">
+            <BrandLogo showTagline />
+          </Link>
+          <LanguageSelector />
+        </div>
         <div className="text-center mb-10">
           <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase">Register Committee</h1>
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">Launch your professional festival operations</p>

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-test.describe.serial('PujaCommittee full role and operations flow', () => {
+test.describe.serial('SamitiBook full role and operations flow', () => {
   test.setTimeout(180_000);
   test.skip(({ browserName }) => browserName !== 'chromium', 'Firebase-backed E2E data setup is exercised in Chromium.');
 
@@ -13,7 +13,7 @@ test.describe.serial('PujaCommittee full role and operations flow', () => {
     pincode: '700001',
     pandal: 'Park Street, Kolkata',
     adminPhone: `98${suffix.padStart(8, '0')}`.slice(0, 10),
-    adminEmail: `poojo.e2e.${runId}@example.com`,
+    adminEmail: `samitibook.e2e.${runId}@example.com`,
     password: 'Test@123456',
   };
 

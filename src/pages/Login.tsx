@@ -9,7 +9,8 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import { ShieldCheck } from 'lucide-react';
+import { BrandLogo } from '../components/brand/BrandLogo';
+import { LanguageSelector } from '../components/language/LanguageSelector';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -54,12 +55,13 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-background-cream flex items-center justify-center p-6">
       <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex mb-4">
-             <div className="bg-accent rounded-2xl p-3 shadow-lg">
-                <ShieldCheck className="w-8 h-8 text-white" />
-             </div>
+        <div className="mb-8 flex items-center justify-between">
+          <Link to="/" aria-label="SamitiBook home">
+            <BrandLogo showTagline />
           </Link>
+          <LanguageSelector />
+        </div>
+        <div className="text-center mb-8">
           <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Admin Portal</h1>
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">Master access for authorized organizers</p>
         </div>
@@ -75,7 +77,7 @@ export default function Login() {
             <Input 
               label="Email Address" 
               type="email" 
-              placeholder="admin@pujacommittee.com"
+              placeholder="admin@samitibook.com"
               {...register('email')}
               error={errors.email?.message}
             />

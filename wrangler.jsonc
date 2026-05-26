@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "poojo-committee",
+  "name": "samitibook",
   "compatibility_date": "2026-05-25",
   "observability": {
     "enabled": true
