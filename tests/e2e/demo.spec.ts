@@ -22,6 +22,8 @@ test.describe('seeded demo committee', () => {
 
     await page.getByRole('link', { name: /^members$/i }).click();
     await expect(page.getByRole('heading', { name: 'Madhumita Sen' })).toBeVisible();
+    await expect(page.getByText('Login code').first()).toBeVisible();
+    await expect(page.getByText('SEC2026')).toBeVisible();
 
     await page.getByRole('link', { name: /chanda & donations/i }).click();
     await expect(page.getByText('Eastern Hardware Stores')).toBeVisible();

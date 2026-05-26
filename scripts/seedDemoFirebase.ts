@@ -199,23 +199,24 @@ async function seed() {
 
   console.log('Writing members...');
   const members = [
-    [DEMO_ADMIN_PHONE, 'Anirban Chatterjee', 'ADMIN', 'Chairperson'],
-    ['+919876500002', 'Madhumita Sen', 'SECRETARY', 'Secretary'],
-    ['+919876500003', 'Rohit Basu', 'CASHIER', 'Cashier'],
-    ['+919876500004', 'Priyanka Dutta', 'DONATION_INCHARGE', 'Sponsorship Lead'],
-    ['+919876500005', 'Arindam Ghosh', 'CHANDA_INCHARGE', 'Collection Lead'],
-    ['+919876500006', 'Sohini Roy', 'CULTURAL_INCHARGE', 'Cultural Lead'],
-    ['+919876500007', 'Debjit Nandi', 'LIGHT_INCHARGE', 'Lighting Lead'],
-    ['+919876500008', 'Sagnik Mukherjee', 'MANDAP_INCHARGE', 'Ritual Lead'],
+    [DEMO_ADMIN_PHONE, 'Anirban Chatterjee', 'ADMIN', 'Chairperson', 'ADM2026'],
+    ['+919876500002', 'Madhumita Sen', 'SECRETARY', 'Secretary', 'SEC2026'],
+    ['+919876500003', 'Rohit Basu', 'CASHIER', 'Cashier', 'CSH2026'],
+    ['+919876500004', 'Priyanka Dutta', 'DONATION_INCHARGE', 'Sponsorship Lead', 'DON2026'],
+    ['+919876500005', 'Arindam Ghosh', 'CHANDA_INCHARGE', 'Collection Lead', 'CHD2026'],
+    ['+919876500006', 'Sohini Roy', 'CULTURAL_INCHARGE', 'Cultural Lead', 'CUL2026'],
+    ['+919876500007', 'Debjit Nandi', 'LIGHT_INCHARGE', 'Lighting Lead', 'LGT2026'],
+    ['+919876500008', 'Sagnik Mukherjee', 'MANDAP_INCHARGE', 'Ritual Lead', 'MND2026'],
   ];
 
-  for (const [phone, name, role, address] of members) {
+  for (const [phone, name, role, address, loginCode] of members) {
     await setDocRest(idToken, `${committeePath}/members/${phone}`, {
       memberId: phone,
       name,
       phone,
       role,
       address,
+      loginCode,
       addedAt: now,
       addedBy: adminUid,
       isActive: true,

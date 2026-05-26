@@ -9,8 +9,14 @@ import { collection, query, getDocs, doc, setDoc, deleteDoc, updateDoc, getDoc }
 import { ROLES, ROLE_COLORS } from '../constants';
 import { UserRole, Member } from '../types';
 import { motion } from 'motion/react';
-import { UserPlus, MoreVertical, Trash2, Edit2, Shield, Phone, Copy, MessageSquare, User } from 'lucide-react';
+import { UserPlus, Trash2, Shield, Phone, Copy, MessageSquare, User, KeyRound, RefreshCw } from 'lucide-react';
 import { cn } from '../lib/utils';
+
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generateLoginCode() {
+  return Array.from({ length: 6 }, () => CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
+}
 
 export default function Members() {
   const { committee, user } = useAuth();
@@ -76,7 +82,8 @@ export default function Members() {
         addedAt: new Date().toISOString(),
         addedBy: user.uid,
         isActive: true,
-        address: newMember.address
+        address: newMember.address,
+        loginCode: generateLoginCode()
       };
 
       await setDoc(memberRef, memberData);
@@ -100,8 +107,33 @@ export default function Members() {
     }
   };
 
+  const regenerateLoginCode = async (memberId: string, hasExistingCode: boolean) => {
+    if (!committee) return;
+    if (hasExistingCode && !window.confirm('Regenerate this member login code? Their old code will stop working.')) return;
+
+    try {
+      const id = committee.id || committee.committeeId;
+      await updateDoc(doc(db, 'committees', id, 'members', memberId), {
+        loginCode: generateLoginCode()
+      });
+      fetchMembers();
+    } catch (error: any) {
+      alert(error.message);
+    }
+  };
+
+  const copyLoginCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      alert('Login code copied');
+    } catch {
+      alert(code);
+    }
+  };
+
   const getWhatsAppLink = (m: Member) => {
-    const text = `You have been added to ${committee?.name} on SamitiBook. Login using your mobile number: ${m.phone} at ${window.location.origin}/member-login`;
+    const codeLine = m.loginCode ? ` Your permanent login code is: ${m.loginCode}.` : '';
+    const text = `You have been added to ${committee?.name} on SamitiBook. Login using your mobile number: ${m.phone}.${codeLine} Open ${window.location.origin}/member-login`;
     return `https://wa.me/${m.phone.replace('+', '')}?text=${encodeURIComponent(text)}`;
   };
 
@@ -185,6 +217,39 @@ export default function Members() {
                        <Trash2 className="w-5 h-5" />
                     </button>
                   )}
+                </div>
+
+                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-sky-700">Login code</p>
+                      <p className="font-mono text-lg font-black text-gray-900 tracking-widest">
+                        {m.loginCode || 'Not set'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {m.loginCode && (
+                        <button
+                          type="button"
+                          onClick={() => copyLoginCode(m.loginCode!)}
+                          className="p-2 bg-white text-sky-700 rounded-xl hover:bg-sky-100 transition-colors"
+                          aria-label={`Copy login code for ${m.name}`}
+                          title="Copy login code"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => regenerateLoginCode(m.memberId, Boolean(m.loginCode))}
+                        className="p-2 bg-white text-seagreen rounded-xl hover:bg-emerald-50 transition-colors"
+                        aria-label={`${m.loginCode ? 'Regenerate' : 'Generate'} login code for ${m.name}`}
+                        title={m.loginCode ? 'Regenerate login code' : 'Generate login code'}
+                      >
+                        {m.loginCode ? <RefreshCw className="w-4 h-4" /> : <KeyRound className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between mt-6">

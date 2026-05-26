@@ -61,6 +61,7 @@ export interface Member {
   isActive: boolean;
   firebaseUID?: string;
   address?: string;
+  loginCode?: string;
 }
 
 export interface EditionMember {
