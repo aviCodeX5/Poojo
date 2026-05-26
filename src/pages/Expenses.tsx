@@ -5,9 +5,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db, storage } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy, where, setDoc, doc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db } from '../firebase';
+import { collection, query, getDocs, addDoc, orderBy, setDoc, doc } from 'firebase/firestore';
 import { Expense, ExpenseCategory, CustomCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../constants';
 import { Plus, Receipt, ShoppingCart, Tag, User, Camera, Calendar, Upload, X, PlusCircle } from 'lucide-react';
@@ -48,15 +47,34 @@ export default function Expenses() {
     dependentMemberName: ''
   });
 
+  const uploadBillPhoto = async (file: File) => {
+    const id = committee.id || committee.committeeId;
+    const fileName = `${Date.now()}_${file.name}`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('committeeId', id);
+    formData.append('userId', user?.uid || '');
+    formData.append('fileName', fileName);
+
+    const response = await fetch('/api/cloudinary/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorMessage = await response.text();
+      throw new Error(errorMessage || 'Failed to upload file to Cloudinary');
+    }
+
+    const data = await response.json();
+    return data.url as string;
+  };
+
   const handleFileUpload = async (file: File) => {
     if (!committee || !user) return;
     setUploading(true);
     try {
-      const id = committee.id || committee.committeeId;
-      const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `committees/${id}/bills/${user.uid}/${fileName}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
+      const downloadURL = await uploadBillPhoto(file);
       setBillPhotoURL(downloadURL);
     } catch (error) {
       console.error('Error uploading file:', error);

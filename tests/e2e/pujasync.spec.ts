@@ -113,7 +113,7 @@ test.describe.serial('SamitiBook full role and operations flow', () => {
     await page.getByLabel('Amount').fill('5000');
     await page.getByLabel('Reason / Particulars').fill(data.expenseReason);
     await page.getByLabel('Vendor Name').fill('E2E Electricals');
-    if (process.env.CHECK_FIREBASE_STORAGE === '1') {
+    if (process.env.CHECK_MEDIA_UPLOAD === '1') {
       await page.locator('input[type="file"]').setInputFiles({
         name: `bill-${suffix}.png`,
         mimeType: 'image/png',

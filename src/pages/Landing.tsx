@@ -1,12 +1,16 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { LanguageSelector } from '../components/language/LanguageSelector';
+import { OnboardingDialog } from '../components/ui/OnboardingDialog';
 import { BarChart3, Landmark, MessageSquare, Search, ShieldCheck, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Landing() {
+  const [activeDialog, setActiveDialog] = useState<'register' | 'member' | null>(null);
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background-cream selection:bg-primary/20">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
@@ -40,16 +44,21 @@ export default function Landing() {
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-                <Link to="/register">
-                  <Button size="lg" className="h-14 w-full px-8 text-base shadow-xl shadow-primary/15 sm:w-auto">
-                    Register Committee
-                  </Button>
-                </Link>
-                <Link to="/member-login">
-                  <Button size="lg" variant="outline" className="h-14 w-full border-blue-100 bg-white px-8 text-base text-slate-800 hover:bg-blue-50 sm:w-auto">
-                    Member Login
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  className="h-14 w-full px-8 text-base shadow-xl shadow-primary/15 sm:w-auto"
+                  onClick={() => setActiveDialog('register')}
+                >
+                  Register Committee
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-14 w-full border-blue-100 bg-white px-8 text-base text-slate-800 hover:bg-blue-50 sm:w-auto"
+                  onClick={() => setActiveDialog('member')}
+                >
+                  Member Login
+                </Button>
               </div>
             </motion.div>
 
@@ -113,6 +122,66 @@ export default function Landing() {
           <p className="text-xs font-bold text-slate-400">© 2026 SamitiBook. Transparent Festival Management.</p>
         </div>
       </footer>
+
+      <OnboardingDialog
+        open={activeDialog === 'register'}
+        title="Before you register"
+        intro="Registration creates a new SamitiBook workspace for one real festival committee. Please read this before creating committee data."
+        sections={[
+          {
+            title: 'What registration creates',
+            items: [
+              'A committee workspace with one primary admin account.',
+              'A place to manage members, roles, collections, donations, expenses, inventory, broadcasts, and settings.',
+              'A committee ID that members will use to identify the correct organization.',
+            ],
+          },
+          {
+            title: 'Dos and don’ts',
+            items: [
+              'Register only if you are authorized to manage this committee.',
+              'One real committee and location should not be registered more than once.',
+              'Use the correct pandal/location details so duplicate committees are not formed.',
+            ],
+          },
+          {
+            title: 'Roles in simple words',
+            items: [
+              'Admin controls the committee profile, members, roles, and major settings.',
+              'Secretary, cashier, incharges, and volunteers get access based on responsibility.',
+              'Members can see information and perform actions only if their assigned role allows it.',
+            ],
+          },
+        ]}
+        onCancel={() => setActiveDialog(null)}
+        onContinue={() => navigate('/register')}
+      />
+
+      <OnboardingDialog
+        open={activeDialog === 'member'}
+        title="Before member login"
+        intro="Member login is for people already added by a committee admin. Your access depends on your assigned role."
+        sections={[
+          {
+            title: 'What members can see',
+            items: [
+              'Committee details, dashboards, and activity that your role is allowed to view.',
+              'Finance, inventory, cultural, mandap, or broadcast modules only when your role permits it.',
+              'Your committee information after logging in with the phone number added by your admin.',
+            ],
+          },
+          {
+            title: 'Dos and don’ts',
+            items: [
+              'Use only your own phone number added by your committee admin.',
+              'Do not share your OTP with anyone.',
+              'Contact your admin if your phone number is not recognized.',
+            ],
+          },
+        ]}
+        onCancel={() => setActiveDialog(null)}
+        onContinue={() => navigate('/member-login')}
+      />
     </div>
   );
 }

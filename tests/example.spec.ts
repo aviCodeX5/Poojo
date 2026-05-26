@@ -7,8 +7,32 @@ test('landing page exposes the main entry points', async ({ page }) => {
   await expect(page.getByText('SamitiBook').first()).toBeVisible();
   await expect(page.getByText('Transparent Festival Management').first()).toBeVisible();
   await expect(page.getByLabel('Language').first()).toBeVisible();
-  await expect(page.getByRole('link', { name: /register committee/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /register committee/i })).toBeVisible();
   await expect(page.getByRole('link', { name: /admin portal access/i }).first()).toBeVisible();
+});
+
+test('registration entry explains rules before opening the form', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: /register committee/i }).click();
+  await expect(page.getByRole('dialog', { name: /before you register/i })).toBeVisible();
+  await expect(page.getByText(/one primary admin/i)).toBeVisible();
+  await expect(page.getByText(/should not be registered more than once/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /i understand, continue/i }).click();
+  await expect(page).toHaveURL(/\/register$/);
+});
+
+test('member login entry explains member access before opening login', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByRole('button', { name: /member login/i }).click();
+  await expect(page.getByRole('dialog', { name: /before member login/i })).toBeVisible();
+  await expect(page.getByText(/phone number added by your committee admin/i)).toBeVisible();
+  await expect(page.getByText(/do not share your otp/i)).toBeVisible();
+
+  await page.getByRole('button', { name: /i understand, continue/i }).click();
+  await expect(page).toHaveURL(/\/member-login$/);
 });
 
 test('admin login screen renders without external dependencies', async ({ page }) => {

@@ -32,6 +32,24 @@ const registerSchema = z.object({
 
 type RegisterForm = z.infer<typeof registerSchema>;
 
+function distanceInMeters(
+  first: { lat: number; lng: number },
+  second: { lat: number; lng: number }
+) {
+  const earthRadiusMeters = 6371000;
+  const toRadians = (value: number) => value * Math.PI / 180;
+  const deltaLat = toRadians(second.lat - first.lat);
+  const deltaLng = toRadians(second.lng - first.lng);
+  const firstLat = toRadians(first.lat);
+  const secondLat = toRadians(second.lat);
+
+  const a = Math.sin(deltaLat / 2) ** 2
+    + Math.cos(firstLat) * Math.cos(secondLat) * Math.sin(deltaLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return earthRadiusMeters * c;
+}
+
 export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<{ id: string } | null>(null);
@@ -75,6 +93,31 @@ export default function Register() {
       if (!existing.empty) {
         alert('A committee with this name already exists in ' + data.city);
         return;
+      }
+
+      if (selectedLocation.lat !== undefined && selectedLocation.lng !== undefined) {
+        const nearbyQuery = query(
+          collection(db, 'committees'),
+          where('city', '==', data.city),
+          where('pujaType', '==', data.pujaType)
+        );
+        const nearbySnap = await getDocs(nearbyQuery);
+        const duplicateLocation = nearbySnap.docs.some(existingDoc => {
+          const existingData = existingDoc.data();
+          const existingLocation = existingData.pandalLatLng;
+          return existingLocation
+            && typeof existingLocation.lat === 'number'
+            && typeof existingLocation.lng === 'number'
+            && distanceInMeters(
+              { lat: selectedLocation.lat!, lng: selectedLocation.lng! },
+              { lat: existingLocation.lat, lng: existingLocation.lng }
+            ) <= 75;
+        });
+
+        if (duplicateLocation) {
+          alert('A committee already appears to be registered at or very near this location. Please contact the existing admin or choose the correct location.');
+          return;
+        }
       }
 
       // 3. Generate Committee ID

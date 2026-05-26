@@ -1,11 +1,16 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "samitibook",
+  "main": "src/worker.ts",
   "compatibility_date": "2026-05-25",
   "observability": {
     "enabled": true
   },
+  "routes": [
+    "https://samitibook.mpcu.workers.dev/api/*"
+  ],
   "assets": {
+    "directory": "dist/client",
     "not_found_handling": "single-page-application"
   },
   "compatibility_flags": [
