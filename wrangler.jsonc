@@ -3,12 +3,11 @@
   "name": "samitibook",
   "main": "src/worker.ts",
   "compatibility_date": "2026-05-25",
+  "workers_dev": true,
+  "preview_urls": true,
   "observability": {
     "enabled": true
   },
-  "routes": [
-    "https://samitibook.mpcu.workers.dev/api/*"
-  ],
   "assets": {
     "directory": "dist/client",
     "not_found_handling": "single-page-application"
