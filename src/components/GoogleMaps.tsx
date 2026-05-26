@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MapPin, Search, Navigation } from 'lucide-react';
 
 interface Location {
-  lat: number;
-  lng: number;
+  lat?: number;
+  lng?: number;
   address: string;
+  isManual?: boolean;
 }
 
 interface GoogleMapsProps {
@@ -33,6 +34,7 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
   const [googleLoaded, setGoogleLoaded] = useState(false);
+  const [googleLoadError, setGoogleLoadError] = useState(false);
 
   // Check if Google Maps is loaded
   useEffect(() => {
@@ -45,6 +47,16 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
     };
     checkGoogleLoaded();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!googleLoaded) {
+        setGoogleLoadError(true);
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [googleLoaded]);
 
   // Initialize map
   useEffect(() => {
@@ -114,7 +126,19 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
   };
 
   const searchLocation = async () => {
-    if (!searchQuery.trim() || !googleLoaded) return;
+    if (!searchQuery.trim()) return;
+
+    if (!googleLoaded) {
+      const manualLocation = {
+        address: searchQuery.trim(),
+        lat: 0,
+        lng: 0,
+        isManual: true,
+      };
+      setSelectedLocation(manualLocation);
+      onLocationSelect(manualLocation);
+      return;
+    }
 
     setLoading(true);
     const geocoder = new window.google.maps.Geocoder();
@@ -210,13 +234,18 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
         </button>
         <button
           onClick={getCurrentLocation}
-          disabled={loading}
+          disabled={loading || !googleLoaded}
           className="p-2 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-50"
           title="Use current location"
         >
           <Navigation className="w-4 h-4" />
         </button>
       </div>
+      {googleLoadError && !googleLoaded && (
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 text-sm text-orange-800">
+          Google Maps could not be loaded. Enter your address above and click Search to continue with a manual location.
+        </div>
+      )}
 
       {/* Selected Location Display */}
       {selectedLocation && (

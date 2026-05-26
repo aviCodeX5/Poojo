@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 
 export default function Expenses() {
-  const { committee, member, isAdminAccount, currentEdition } = useAuth();
+  const { committee, member, currentEdition, user } = useAuth();
   const { role, hasModuleAccess } = usePermissions();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -49,12 +49,12 @@ export default function Expenses() {
   });
 
   const handleFileUpload = async (file: File) => {
-    if (!committee) return;
+    if (!committee || !user) return;
     setUploading(true);
     try {
       const id = committee.id || committee.committeeId;
       const fileName = `${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, `committees/${id}/bills/${fileName}`);
+      const storageRef = ref(storage, `committees/${id}/bills/${user.uid}/${fileName}`);
       await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(storageRef);
       setBillPhotoURL(downloadURL);
@@ -140,11 +140,17 @@ export default function Expenses() {
         vendorName: formData.vendorName,
         date: new Date().toISOString(),
         year: currentEdition?.year || new Date().getFullYear(),
-        editionId: currentEdition?.id,
         enteredBy: member?.memberId || 'ADMIN',
-        enteredByRole: role,
-        dependentMemberName: role === 'CASHIER' ? formData.dependentMemberName : undefined
+        enteredByRole: role
       };
+
+      if (currentEdition?.id) {
+        expenseData.editionId = currentEdition.id;
+      }
+
+      if (role === 'CASHIER' && formData.dependentMemberName) {
+        expenseData.dependentMemberName = formData.dependentMemberName;
+      }
       
       if (billPhotoURL) {
         expenseData.billPhotoURL = billPhotoURL;

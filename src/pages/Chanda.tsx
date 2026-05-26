@@ -71,11 +71,14 @@ export default function Chanda() {
         collectedBy: member?.memberId || 'ADMIN',
         date: new Date().toISOString(),
         year: currentEdition?.year || year,
-        editionId: currentEdition?.id,
         status,
         receiptNumber: receiptNo,
         notes: formData.notes
       };
+
+      if (currentEdition?.id) {
+        entryData.editionId = currentEdition.id;
+      }
 
       if (status === 'Approved') {
         entryData.approvedBy = member?.memberId || 'ADMIN';

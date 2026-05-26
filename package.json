@@ -9,7 +9,11 @@
     "preview": "npm run build && wrangler dev",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "firebase:deploy:rules": "firebase deploy --only firestore,storage",
+    "firebase:seed:demo": "tsx scripts/seedDemoFirebase.ts",
+    "test:e2e:full": "playwright test tests/e2e/pujasync.spec.ts --reporter=line",
+    "verify": "npm run lint && npm run build && playwright test tests/example.spec.ts tests/e2e/demo.spec.ts --reporter=line"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

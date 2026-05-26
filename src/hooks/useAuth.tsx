@@ -104,7 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const refreshCommittee = async () => {
-    if (user) await fetchCommitteeData(user);
+    const currentUser = user || auth.currentUser;
+    if (currentUser) await fetchCommitteeData(currentUser);
   };
 
   return (

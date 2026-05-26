@@ -75,6 +75,7 @@ service cloud.firestore {
       }
       match /members/{memberId} {
         allow get: if isSignedIn() && (memberId == request.auth.token.phone_number || isMemberOf(committeeId));
+        allow list: if isMemberOf(committeeId);
         allow create: if isSignedIn() && isValidId(memberId);
         allow update, delete: if isAdmin(committeeId);
       }
@@ -84,11 +85,11 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /chandaEntries/{entryId} {
-        allow get: if isMemberOf(committeeId);
-        allow create: if hasRole(committeeId, ['ADMIN', 'Chanda_Volunteer', 'Chanda_Incharge', 'Secretary'])
+        allow get, list: if isMemberOf(committeeId);
+        allow create: if hasRole(committeeId, ['ADMIN', 'CHANDA_VOLUNTEER', 'CHANDA_INCHARGE', 'SECRETARY'])
           && isValidId(entryId)
           && request.resource.data.amount is number;
-        allow update: if hasRole(committeeId, ['ADMIN', 'Chanda_Incharge', 'Secretary'])
+        allow update: if hasRole(committeeId, ['ADMIN', 'CHANDA_INCHARGE', 'SECRETARY'])
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'approvedBy', 'approvedAt', 'updatedAt']);
         allow delete: if isAdmin(committeeId);
       }
@@ -98,8 +99,8 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /donations/{entryId} {
-        allow get: if isMemberOf(committeeId);
-        allow create, update: if hasRole(committeeId, ['ADMIN', 'Donation_Incharge', 'Secretary'])
+        allow get, list: if isMemberOf(committeeId);
+        allow create, update: if hasRole(committeeId, ['ADMIN', 'DONATION_INCHARGE', 'SECRETARY'])
           && isValidId(entryId);
         allow delete: if isAdmin(committeeId);
       }
@@ -109,7 +110,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /expenses/{entryId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create: if hasRole(committeeId, [
           'ADMIN', 'CASHIER', 'LIGHT_INCHARGE', 'PANDAL_INCHARGE', 'VISARJAN_INCHARGE', 'MANDAP_INCHARGE', 'SECRETARY'
         ]) && isValidId(entryId);
@@ -126,7 +127,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /broadcasts/{docId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create: if hasRole(committeeId, ['ADMIN', 'SECRETARY', 'JOINT_SECRETARY'])
           && isValidId(docId);
         allow update, delete: if isAdmin(committeeId);
@@ -137,7 +138,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /customCategories/{categoryId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create: if hasRole(committeeId, ['ADMIN', 'SECRETARY', 'JOINT_SECRETARY'])
           && isValidId(categoryId);
         allow delete: if isAdmin(committeeId);
@@ -148,7 +149,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /customRoles/{roleId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create, update, delete: if isAdmin(committeeId) && isValidId(roleId);
       }
 
@@ -157,7 +158,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /editions/{editionId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create, update, delete: if isAdmin(committeeId) && isValidId(editionId);
       }
 
@@ -166,7 +167,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /editionMembers/{editionMemberId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create, update, delete: if isAdmin(committeeId) && isValidId(editionMemberId);
       }
 
@@ -175,7 +176,7 @@ service cloud.firestore {
         allow list: if isMemberOf(committeeId);
       }
       match /yearlyBudget/{budgetId} {
-        allow get: if isMemberOf(committeeId);
+        allow get, list: if isMemberOf(committeeId);
         allow create: if hasRole(committeeId, ['ADMIN', 'SECRETARY', 'JOINT_SECRETARY'])
           && isValidId(budgetId)
           && request.resource.data.allocatedAmount is number
@@ -187,8 +188,8 @@ service cloud.firestore {
 
       // Generic Catch-all for sub-collections
       match /{subCollection}/{docId} {
-        allow read: if isMemberOf(committeeId);
-        allow create, update: if hasRole(committeeId, ['ADMIN', 'Secretary', 'Joint_Secretary', 'Light_Incharge', 'Pandal_Incharge', 'Visarjan_Incharge', 'Mandap_Incharge', 'Cultural_Incharge']);
+        allow get, list: if isMemberOf(committeeId);
+        allow create, update: if hasRole(committeeId, ['ADMIN', 'SECRETARY', 'JOINT_SECRETARY', 'LIGHT_INCHARGE', 'PANDAL_INCHARGE', 'VISARJAN_INCHARGE', 'MANDAP_INCHARGE', 'CULTURAL_INCHARGE']);
         allow delete: if isAdmin(committeeId);
       }
     }

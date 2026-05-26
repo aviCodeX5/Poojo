@@ -1,18 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('landing page exposes the main entry points', async ({ page }) => {
+  await page.goto('/');
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle(/Playwright/);
+  await expect(page).toHaveTitle(/PujaCommittee|Poojo|React/i);
+  await expect(page.getByRole('link', { name: /register committee/i })).toBeVisible();
+  await expect(page.getByRole('link', { name: /admin portal access/i })).toBeVisible();
 });
 
-test('get started link', async ({ page }) => {
-  await page.goto('https://playwright.dev/');
+test('admin login screen renders without external dependencies', async ({ page }) => {
+  await page.goto('/login');
 
-  // Click the get started link.
-  await page.getByRole('link', { name: 'Get started' }).click();
-
-  // Expects page to have a heading with the name of Installation.
-  await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /admin portal/i })).toBeVisible();
+  await expect(page.getByLabel('Email Address')).toBeVisible();
+  await expect(page.getByLabel('Password')).toBeVisible();
 });

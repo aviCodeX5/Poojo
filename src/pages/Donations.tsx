@@ -68,11 +68,14 @@ export default function Donations() {
         estimatedValue: Number(formData.estimatedValue),
         date: new Date().toISOString(),
         year: currentEdition?.year || year,
-        editionId: currentEdition?.id,
         enteredBy: member?.memberId || 'ADMIN',
         receiptNumber: receiptNo,
         receiptSent: false
       };
+
+      if (currentEdition?.id) {
+        donationData.editionId = currentEdition.id;
+      }
 
       await addDoc(collection(db, 'committees', id, 'donations'), donationData);
       setFormData({ donorName: '', donorPhone: '', amount: '', donationType: 'Cash', kindDescription: '', estimatedValue: '' });

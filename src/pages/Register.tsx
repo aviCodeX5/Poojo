@@ -11,6 +11,7 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import GoogleMaps from '../components/GoogleMaps';
 import { generateCommitteeId } from '../utils/idGenerator';
+import { useAuth } from '../hooks/useAuth';
 import { PujaType } from '../types';
 import { CheckCircle2, Copy, PlusCircle, X, MapPin } from 'lucide-react';
 
@@ -36,7 +37,8 @@ export default function Register() {
   const [newPujaTypeName, setNewPujaTypeName] = useState('');
   const [customPujaTypes, setCustomPujaTypes] = useState<string[]>([]);
   const [allPujaTypes, setAllPujaTypes] = useState<string[]>(DEFAULT_PUJA_TYPES);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat?: number; lng?: number; address: string } | null>(null);
+  const { refreshCommittee } = useAuth();
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
@@ -90,7 +92,9 @@ export default function Register() {
         state: data.state,
         pincode: data.pincode,
         pandalAddress: selectedLocation.address,
-        pandalLatLng: { lat: selectedLocation.lat, lng: selectedLocation.lng },
+        pandalLatLng: selectedLocation.lat !== undefined && selectedLocation.lng !== undefined
+          ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
+          : null,
         adminUID: uid,
         adminEmail: data.email,
         adminPhone: data.adminPhone.startsWith('+91') ? data.adminPhone : `+91${data.adminPhone}`,
@@ -114,6 +118,7 @@ export default function Register() {
         firebaseUID: uid
       });
 
+      await refreshCommittee();
       setSuccessData({ id: committeeId });
     } catch (error: any) {
       console.error(error);

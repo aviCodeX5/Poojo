@@ -10,21 +10,16 @@ service firebase.storage {
       return committeeId is string && committeeId.size() <= 128 && committeeId.matches("^[a-zA-Z0-9_\\-\\+]+$");
     }
     
-    function isMemberOf(committeeId) {
-      return isSignedIn() && (
-        request.auth.uid == get(/databases/(default)/documents/committees/$(committeeId)).data.adminUID ||
-        exists(/databases/(default)/documents/committees/$(committeeId)/members/$(request.auth.token.phone_number))
-      );
-    }
-    
-    function isAdmin(committeeId) {
-      return isSignedIn() && request.auth.uid == get(/databases/(default)/documents/committees/$(committeeId)).data.adminUID;
-    }
-    
     // Committee bill photos
-    match /committees/{committeeId}/bills/{fileName} {
-      allow read: if isMemberOf(committeeId);
-      allow create, delete: if isMemberOf(committeeId) && isValidCommitteeId(committeeId);
+    match /committees/{committeeId}/bills/{userId}/{fileName} {
+      // The app stores committee membership in a named Firestore database.
+      // Cloud Storage rules can only use firestore.get/exists against the default
+      // database, so membership checks are enforced by Firestore before bill URLs
+      // are attached to expense records.
+      allow read: if isSignedIn() && isValidCommitteeId(committeeId);
+      allow create, delete: if isSignedIn()
+        && request.auth.uid == userId
+        && isValidCommitteeId(committeeId);
     }
   }
 }

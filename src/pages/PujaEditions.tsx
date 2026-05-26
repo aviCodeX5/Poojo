@@ -4,14 +4,15 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
+import { usePermissions } from '../hooks/usePermissions';
 import { db } from '../firebase';
 import { collection, query, getDocs, addDoc, updateDoc, doc, deleteDoc, orderBy } from 'firebase/firestore';
 import { PujaEdition } from '../types';
 import { Plus, Calendar, DollarSign, Palette, Shield, CheckCircle2, X, Save, History } from 'lucide-react';
 
 export default function PujaEditions() {
-  const { committee, member } = useAuth();
-  const { role } = useAuth();
+  const { committee, member, refreshCommittee } = useAuth();
+  const { role } = usePermissions();
   const [editions, setEditions] = useState<PujaEdition[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNewEditionForm, setShowNewEditionForm] = useState(false);
@@ -101,6 +102,7 @@ export default function PujaEditions() {
       });
       setShowNewEditionForm(false);
       fetchEditions();
+      await refreshCommittee();
       alert('New puja edition created successfully');
     } catch (error) {
       console.error('Error creating edition:', error);
@@ -129,6 +131,7 @@ export default function PujaEditions() {
 
       setSelectedEdition(editionId);
       fetchEditions();
+      await refreshCommittee();
       alert('Current edition updated');
     } catch (error) {
       console.error('Error setting current edition:', error);
