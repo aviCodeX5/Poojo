@@ -96,7 +96,7 @@ export default function Login() {
             <div className="text-center space-y-3 mt-4">
               <p className="text-xs text-gray-400 uppercase font-bold tracking-widest">or</p>
               <Link to="/member-login" className="text-primary font-bold block hover:underline">
-                Login as Member with Phone OTP
+                Login as Member with Mobile Code
               </Link>
               <Link to="/register" className="text-sm text-gray-600 block">
                 Need to register a new committee? <span className="text-accent font-bold">Sign Up</span>

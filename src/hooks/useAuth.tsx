@@ -4,20 +4,27 @@ import { auth, db } from '../firebase';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { Member, Committee, PujaEdition } from '../types';
 
+type AppUser = Pick<User, 'uid' | 'email' | 'phoneNumber'> & {
+  type?: 'ADMIN' | 'MEMBER';
+};
+
 interface AuthContextType {
-  user: User | null;
+  user: AppUser | null;
   loading: boolean;
   committee: Committee | null;
   member: Member | null;
   isAdminAccount: boolean;
   currentEdition: PujaEdition | null;
   refreshCommittee: () => Promise<void>;
+  loginWithMemberCode: (phone: string, code: string) => Promise<string>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const D1_SESSION_TOKEN_KEY = 'samitibook.d1SessionToken';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [committee, setCommittee] = useState<Committee | null>(null);
   const [member, setMember] = useState<Member | null>(null);
@@ -50,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // 2. Check if user is a Member (OTP Login)
+      // 2. Legacy Firebase phone-auth fallback for older member sessions.
       // Member phone is stored in Firebase Auth user.phoneNumber (E.164)
       if (firebaseUser.phoneNumber) {
         const phone = firebaseUser.phoneNumber;
@@ -86,16 +93,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const applyD1Session = async (token: string) => {
+    const response = await fetch('/api/auth/session', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Member session expired');
+    const data = await response.json();
+
+    setUser(data.user as AppUser);
+    setCommittee(data.committee as Committee);
+    setMember(data.member as Member);
+    setIsAdminAccount(false);
+
+    if (data.committee?.currentEditionId) {
+      const editionResponse = await fetch(`/api/d1/committees/${data.committee.committeeId}/editions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (editionResponse.ok) {
+        const editionData = await editionResponse.json();
+        const current = editionData.records?.find((entry: PujaEdition) => entry.id === data.committee.currentEditionId);
+        setCurrentEdition(current || null);
+      }
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
       if (firebaseUser) {
+        setUser(firebaseUser);
+        localStorage.removeItem(D1_SESSION_TOKEN_KEY);
         await fetchCommitteeData(firebaseUser);
       } else {
-        setCommittee(null);
-        setMember(null);
-        setIsAdminAccount(false);
-        setCurrentEdition(null);
+        const token = localStorage.getItem(D1_SESSION_TOKEN_KEY);
+        if (token) {
+          try {
+            await applyD1Session(token);
+          } catch {
+            localStorage.removeItem(D1_SESSION_TOKEN_KEY);
+            setUser(null);
+            setCommittee(null);
+            setMember(null);
+            setIsAdminAccount(false);
+            setCurrentEdition(null);
+          }
+        } else {
+          setUser(null);
+          setCommittee(null);
+          setMember(null);
+          setIsAdminAccount(false);
+          setCurrentEdition(null);
+        }
       }
       setLoading(false);
     });
@@ -105,11 +152,60 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshCommittee = async () => {
     const currentUser = user || auth.currentUser;
-    if (currentUser) await fetchCommitteeData(currentUser);
+    const token = localStorage.getItem(D1_SESSION_TOKEN_KEY);
+    if (auth.currentUser) {
+      await fetchCommitteeData(auth.currentUser);
+    } else if (token) {
+      await applyD1Session(token);
+    } else if (currentUser && 'uid' in currentUser) {
+      setUser(currentUser);
+    }
+  };
+
+  const loginWithMemberCode = async (phone: string, code: string) => {
+    const response = await fetch('/api/auth/member-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, code }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || 'Unable to login with this mobile number and code');
+    }
+
+    localStorage.setItem(D1_SESSION_TOKEN_KEY, data.token);
+    setUser({
+      uid: data.member.memberId,
+      email: null,
+      phoneNumber: data.member.phone,
+      type: 'MEMBER',
+    });
+    setCommittee(data.committee as Committee);
+    setMember(data.member as Member);
+    setIsAdminAccount(false);
+    setCurrentEdition(null);
+    return data.committee.committeeId || data.committee.id;
+  };
+
+  const logout = async () => {
+    const token = localStorage.getItem(D1_SESSION_TOKEN_KEY);
+    if (token) {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+      localStorage.removeItem(D1_SESSION_TOKEN_KEY);
+    }
+    await auth.signOut();
+    setUser(null);
+    setCommittee(null);
+    setMember(null);
+    setIsAdminAccount(false);
+    setCurrentEdition(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, committee, member, isAdminAccount, currentEdition, refreshCommittee }}>
+    <AuthContext.Provider value={{ user, loading, committee, member, isAdminAccount, currentEdition, refreshCommittee, loginWithMemberCode, logout }}>
       {children}
     </AuthContext.Provider>
   );

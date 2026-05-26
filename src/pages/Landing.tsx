@@ -174,7 +174,7 @@ export default function Landing() {
             title: 'Dos and don’ts',
             items: [
               'Use only your own phone number added by your committee admin.',
-              'Do not share your OTP with anyone.',
+              'Do not share your permanent login code with anyone.',
               'Contact your admin if your phone number is not recognized.',
             ],
           },

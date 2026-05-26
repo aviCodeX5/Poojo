@@ -29,7 +29,7 @@ test('member login entry explains member access before opening login', async ({ 
   await page.getByRole('button', { name: /member login/i }).click();
   await expect(page.getByRole('dialog', { name: /before member login/i })).toBeVisible();
   await expect(page.getByText(/phone number added by your committee admin/i)).toBeVisible();
-  await expect(page.getByText(/do not share your otp/i)).toBeVisible();
+  await expect(page.getByText(/do not share your permanent login code/i)).toBeVisible();
 
   await page.getByRole('button', { name: /i understand, continue/i }).click();
   await expect(page).toHaveURL(/\/member-login$/);
@@ -44,6 +44,28 @@ test('admin login screen renders without external dependencies', async ({ page }
   await expect(page.getByRole('heading', { name: /admin portal/i })).toBeVisible();
   await expect(page.getByLabel('Email Address')).toBeVisible();
   await expect(page.getByLabel('Password')).toBeVisible();
+});
+
+test('member login uses mobile number and permanent code', async ({ page }) => {
+  await page.goto('/member-login');
+
+  await expect(page.getByRole('heading', { name: /member sync/i })).toBeVisible();
+  await expect(page.getByText(/mobile number and permanent code/i)).toBeVisible();
+  await expect(page.getByLabel('Phone Number')).toBeVisible();
+  await expect(page.getByLabel('Permanent Login Code')).toBeVisible();
+  await expect(page.getByRole('button', { name: /access member dashboard/i })).toBeVisible();
+});
+
+test('member can access dashboard with permanent code', async ({ page }) => {
+  await page.goto('/member-login');
+
+  await page.getByLabel('Phone Number').fill('9876500002');
+  await page.getByLabel('Permanent Login Code').fill('SEC2026');
+  await page.getByRole('button', { name: /access member dashboard/i }).click();
+
+  await page.waitForURL(/\/DUR-2026-KOL-0001\/dashboard$/, { timeout: 30_000 });
+  await expect(page.getByText('Madhumita Sen')).toBeVisible();
+  await expect(page.getByText('SECRETARY').first()).toBeVisible();
 });
 
 test('registration uses OpenLayers map without Google Maps setup', async ({ page }) => {

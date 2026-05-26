@@ -3,17 +3,16 @@ import Navbar from './Navbar';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
-import { auth } from '../../firebase';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { LanguageSelector } from '../language/LanguageSelector';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { committee } = useAuth();
+  const { committee, logout } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    await auth.signOut();
+    await logout();
     navigate('/');
   };
 

@@ -15,5 +15,12 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "samitibook",
+      "database_id": "3e1493a2-4817-4c25-9f6e-61faef0747b3"
+    }
   ]
 }
