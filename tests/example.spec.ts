@@ -45,3 +45,10 @@ test('admin login screen renders without external dependencies', async ({ page }
   await expect(page.getByLabel('Email Address')).toBeVisible();
   await expect(page.getByLabel('Password')).toBeVisible();
 });
+
+test('registration uses OpenLayers map without Google Maps setup', async ({ page }) => {
+  await page.goto('/register');
+
+  await expect(page.getByText(/OpenLayers map powered by OpenStreetMap/i)).toBeVisible();
+  await expect(page.getByPlaceholder(/Search for pandal location/i)).toBeVisible();
+});

@@ -11,6 +11,9 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss(), VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      },
       manifest: {
         name: 'SamitiBook',
         short_name: 'SamitiBook',
