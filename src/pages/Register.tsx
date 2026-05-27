@@ -3,18 +3,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
-import { db, auth } from '../firebase';
-import { collection, doc, setDoc, query, where, getDocs } from 'firebase/firestore';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { LanguageSelector } from '../components/language/LanguageSelector';
 import GoogleMaps from '../components/GoogleMaps';
-import { generateCommitteeId } from '../utils/idGenerator';
 import { useAuth } from '../hooks/useAuth';
-import { PujaType } from '../types';
 import { CheckCircle2, Copy, PlusCircle, X, MapPin } from 'lucide-react';
 
 const DEFAULT_PUJA_TYPES = ['Durga', 'Ganesh', 'Kali', 'Saraswati', 'Lakshmi', 'Other'];
@@ -28,6 +23,10 @@ const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   adminPhone: z.string().min(10, 'Valid phone number required (e.g. 9876543210)'),
+});
+
+const otpSchema = z.object({
+  code: z.string().min(4, 'Enter the verification code from your email'),
 });
 
 type RegisterForm = z.infer<typeof registerSchema>;
@@ -53,16 +52,21 @@ function distanceInMeters(
 export default function Register() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<{ id: string } | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [devCode, setDevCode] = useState<string | null>(null);
   const [showNewPujaTypeInput, setShowNewPujaTypeInput] = useState(false);
   const [newPujaTypeName, setNewPujaTypeName] = useState('');
   const [customPujaTypes, setCustomPujaTypes] = useState<string[]>([]);
   const [allPujaTypes, setAllPujaTypes] = useState<string[]>(DEFAULT_PUJA_TYPES);
   const [selectedLocation, setSelectedLocation] = useState<{ lat?: number; lng?: number; address: string } | null>(null);
-  const { refreshCommittee } = useAuth();
+  const { startRegistration, confirmRegistration } = useAuth();
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+  });
+  const { register: registerOtp, handleSubmit: handleOtpSubmit, formState: { errors: otpErrors } } = useForm<z.infer<typeof otpSchema>>({
+    resolver: zodResolver(otpSchema),
   });
 
   const handleCreatePujaType = () => {
@@ -83,54 +87,7 @@ export default function Register() {
         return;
       }
 
-      // 1. Create Firebase Auth User first (needed for Firestore permissions)
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      const uid = userCredential.user.uid;
-
-      // 2. Check if name already exists in this city (now authenticated)
-      const q = query(collection(db, 'committees'), where('name', '==', data.name), where('city', '==', data.city));
-      const existing = await getDocs(q);
-      if (!existing.empty) {
-        alert('A committee with this name already exists in ' + data.city);
-        return;
-      }
-
-      if (selectedLocation.lat !== undefined && selectedLocation.lng !== undefined) {
-        const nearbyQuery = query(
-          collection(db, 'committees'),
-          where('city', '==', data.city),
-          where('pujaType', '==', data.pujaType)
-        );
-        const nearbySnap = await getDocs(nearbyQuery);
-        const duplicateLocation = nearbySnap.docs.some(existingDoc => {
-          const existingData = existingDoc.data();
-          const existingLocation = existingData.pandalLatLng;
-          return existingLocation
-            && typeof existingLocation.lat === 'number'
-            && typeof existingLocation.lng === 'number'
-            && distanceInMeters(
-              { lat: selectedLocation.lat!, lng: selectedLocation.lng! },
-              { lat: existingLocation.lat, lng: existingLocation.lng }
-            ) <= 75;
-        });
-
-        if (duplicateLocation) {
-          alert('A committee already appears to be registered at or very near this location. Please contact the existing admin or choose the correct location.');
-          return;
-        }
-      }
-
-      // 3. Generate Committee ID
-      const year = new Date().getFullYear();
-      // For sequence, in a production app we'd use a counter or transaction.
-      // Here we'll use a random 4-digit for mock sequence.
-      const sequence = Math.floor(1000 + Math.random() * 9000);
-      const committeeId = generateCommitteeId(data.pujaType as PujaType, year, data.city, sequence);
-
-      // 4. Create Committee Document
-      const committeeRef = doc(db, 'committees', committeeId);
-      await setDoc(committeeRef, {
-        committeeId,
+      const result = await startRegistration({
         name: data.name,
         pujaType: data.pujaType,
         city: data.city,
@@ -140,33 +97,29 @@ export default function Register() {
         pandalLatLng: selectedLocation.lat !== undefined && selectedLocation.lng !== undefined
           ? { lat: selectedLocation.lat, lng: selectedLocation.lng }
           : null,
-        adminUID: uid,
         adminEmail: data.email,
         adminPhone: data.adminPhone.startsWith('+91') ? data.adminPhone : `+91${data.adminPhone}`,
-        createdAt: new Date().toISOString(),
-        isActive: true,
-        foundedYear: year,
-        customPujaTypes: customPujaTypes,
+        email: data.email,
+        password: data.password,
+        customPujaTypes,
       });
-
-      // 5. Add Admin as the first member record for phone login consistency
-      const phone = data.adminPhone.startsWith('+91') ? data.adminPhone : `+91${data.adminPhone}`;
-      const memberRef = doc(db, 'committees', committeeId, 'members', phone);
-      await setDoc(memberRef, {
-        memberId: phone,
-        name: 'Administrator',
-        phone: phone,
-        role: 'ADMIN',
-        addedAt: new Date().toISOString(),
-        addedBy: uid,
-        isActive: true,
-        firebaseUID: uid
-      });
-
-      await refreshCommittee();
-      setSuccessData({ id: committeeId });
+      setPendingEmail(result.email);
+      setDevCode(result.developmentCode || null);
     } catch (error: any) {
       console.error(error);
+      alert(error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const onOtpSubmit = async (data: z.infer<typeof otpSchema>) => {
+    if (!pendingEmail) return;
+    setIsSubmitting(true);
+    try {
+      const committeeId = await confirmRegistration(pendingEmail, data.code);
+      setSuccessData({ id: committeeId });
+    } catch (error: any) {
       alert(error.message);
     } finally {
       setIsSubmitting(false);
@@ -223,6 +176,24 @@ export default function Register() {
         </div>
 
         <Card className="shadow-xl">
+          {pendingEmail ? (
+            <form onSubmit={handleOtpSubmit(onOtpSubmit)} className="space-y-6">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                <h3 className="font-black text-slate-900">Verify your admin email</h3>
+                <p className="mt-2 text-sm text-slate-600">
+                  We sent a verification code to {pendingEmail}. Enter it below to create your committee and admin account.
+                </p>
+                {devCode && <p className="mt-3 text-xs font-bold text-primary">Development code: {devCode}</p>}
+              </div>
+              <Input label="Email Verification Code" {...registerOtp('code')} error={otpErrors.code?.message} />
+              <Button type="submit" size="lg" className="w-full h-14" isLoading={isSubmitting}>
+                Verify Email & Create Committee
+              </Button>
+              <Button type="button" variant="ghost" className="w-full" onClick={() => setPendingEmail(null)}>
+                Back to details
+              </Button>
+            </form>
+          ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input 
@@ -304,6 +275,7 @@ export default function Register() {
               Already have a committee? <Link to="/login" className="text-primary font-bold">Admin Login</Link>
             </p>
           </form>
+          )}
         </Card>
       </div>
     </div>

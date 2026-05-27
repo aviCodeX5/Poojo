@@ -4,8 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { apiList } from '../lib/api';
 import { Member } from '../types';
 import { Download, Users, Shield, User, Building2 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -29,9 +28,7 @@ export default function OrgChart() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'members'), orderBy('addedAt', 'desc'));
-      const snap = await getDocs(q);
-      const membersList = snap.docs.map(d => d.data() as Member);
+      const membersList = (await apiList<Member>(id, 'members')).sort((a, b) => String(b.addedAt).localeCompare(String(a.addedAt)));
       setMembers(membersList);
     } catch (error) {
       console.error('Error fetching members:', error);

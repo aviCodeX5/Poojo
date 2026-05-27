@@ -5,9 +5,8 @@ import { Button } from '../components/ui/Button';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
 import { cn } from '../lib/utils';
-import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+import { apiList } from '../lib/api';
 import {
   IndianRupee, TrendingUp, TrendingDown, Users,
   BarChart, Wallet, CreditCard, ChevronRight, Bell, Calendar, Settings
@@ -40,30 +39,25 @@ export default function Dashboard() {
         const id = committee.id || committee.committeeId;
         
         // 1. Fetch Summary Stats
-        const donationsSnap = await getDocs(collection(db, 'committees', id, 'donations'));
-        const chandaSnap = await getDocs(collection(db, 'committees', id, 'chandaEntries'));
-        const expensesSnap = await getDocs(collection(db, 'committees', id, 'expenses'));
-        const membersSnap = await getDocs(collection(db, 'committees', id, 'members'));
+        const [donations, chanda, expenses, members] = await Promise.all([
+          apiList<any>(id, 'donations'),
+          apiList<any>(id, 'chandaEntries'),
+          apiList<any>(id, 'expenses'),
+          apiList<any>(id, 'members'),
+        ]);
 
-        const dTotal = donationsSnap.docs.reduce((acc, doc) => acc + (doc.data().amount || 0), 0);
-        const cTotal = chandaSnap.docs.reduce((acc, doc) => acc + (doc.data().amount || 0), 0);
-        const eTotal = expensesSnap.docs.reduce((acc, doc) => acc + (doc.data().amount || 0), 0);
+        const dTotal = donations.reduce((acc, doc) => acc + (doc.amount || 0), 0);
+        const cTotal = chanda.reduce((acc, doc) => acc + (doc.amount || 0), 0);
+        const eTotal = expenses.reduce((acc, doc) => acc + (doc.amount || 0), 0);
 
         setStats({
           totalDonations: dTotal,
           totalChanda: cTotal,
           totalExpenses: eTotal,
-          memberCount: membersSnap.size
+          memberCount: members.length
         });
 
-        // 2. Fetch Recent Transactions
-        const recentExQuery = query(
-          collection(db, 'committees', id, 'expenses'),
-          orderBy('date', 'desc'),
-          limit(5)
-        );
-        const recentExSnap = await getDocs(recentExQuery);
-        setRecentExpenses(recentExSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setRecentExpenses(expenses.sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 5));
 
       } catch (error) {
         console.error("Dashboard data fetch error:", error);
@@ -380,4 +374,3 @@ function StatCard({
     </Card>
   );
 }
-

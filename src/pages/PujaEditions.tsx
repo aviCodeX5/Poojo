@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, updateDoc, doc, deleteDoc, orderBy } from 'firebase/firestore';
+import { apiCreate, apiDelete, apiList, apiUpdate, apiUpdateCommittee } from '../lib/api';
 import { PujaEdition } from '../types';
 import { Plus, Calendar, DollarSign, Palette, Shield, CheckCircle2, X, Save, History } from 'lucide-react';
 
@@ -42,9 +41,7 @@ export default function PujaEditions() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'editions'), orderBy('year', 'desc'));
-      const snap = await getDocs(q);
-      const editionsList = snap.docs.map(d => ({ id: d.id, ...d.data() } as PujaEdition));
+      const editionsList = (await apiList<PujaEdition>(id, 'editions')).sort((a, b) => b.year - a.year);
       setEditions(editionsList);
       
       // Set selected edition to the active one
@@ -66,10 +63,10 @@ export default function PujaEditions() {
       
       // Deactivate all existing editions
       for (const edition of editions) {
-        await updateDoc(doc(db, 'committees', id, 'editions', edition.id!), { isActive: false });
+        await apiUpdate<PujaEdition>(id, 'editions', edition.id!, { isActive: false });
       }
 
-      const newEdition = await addDoc(collection(db, 'committees', id, 'editions'), {
+      const newEdition = await apiCreate<PujaEdition>(id, 'editions', {
         year: formData.year,
         pujaType: formData.pujaType,
         editionName: formData.editionName,
@@ -84,7 +81,7 @@ export default function PujaEditions() {
       });
 
       // Update committee with current edition
-      await updateDoc(doc(db, 'committees', id), {
+      await apiUpdateCommittee(id, {
         currentEditionId: newEdition.id,
         currentYear: formData.year
       });
@@ -117,14 +114,12 @@ export default function PujaEditions() {
       
       // Deactivate all editions
       for (const edition of editions) {
-        await updateDoc(doc(db, 'committees', id, 'editions', edition.id!), { isActive: false });
+        await apiUpdate<PujaEdition>(id, 'editions', edition.id!, { isActive: false });
       }
 
-      // Activate selected edition
-      await updateDoc(doc(db, 'committees', id, 'editions', editionId), { isActive: true });
+      await apiUpdate<PujaEdition>(id, 'editions', editionId, { isActive: true });
 
-      // Update committee with current edition
-      await updateDoc(doc(db, 'committees', id), {
+      await apiUpdateCommittee(id, {
         currentEditionId: editionId,
         currentYear: editions.find(e => e.id === editionId)?.year
       });
@@ -144,7 +139,7 @@ export default function PujaEditions() {
     if (!confirm('Are you sure you want to delete this edition? This will not delete associated data.')) return;
     try {
       const id = committee.id || committee.committeeId;
-      await deleteDoc(doc(db, 'committees', id, 'editions', editionId));
+      await apiDelete(id, 'editions', editionId);
       fetchEditions();
       alert('Edition deleted successfully');
     } catch (error) {

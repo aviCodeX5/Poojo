@@ -184,7 +184,7 @@ export const exportMembersToExcel = (members: any[], committeeName: string) => {
     'Added At',
     'Added By',
     'Is Active',
-    'Firebase UID'
+    'Login Code'
   ];
 
   const data = members.map(member => ({
@@ -196,7 +196,7 @@ export const exportMembersToExcel = (members: any[], committeeName: string) => {
     'Added At': member.addedAt ? format(new Date(member.addedAt), 'dd MMM yyyy, hh:mm a') : '',
     'Added By': member.addedBy || '',
     'Is Active': member.isActive ? 'Yes' : 'No',
-    'Firebase UID': member.firebaseUID || ''
+    'Login Code': member.loginCode || ''
   }));
 
   exportToExcel(data, {

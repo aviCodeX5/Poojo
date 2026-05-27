@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy } from 'firebase/firestore';
+import { apiCreate, apiList } from '../lib/api';
 import { Broadcast, BroadcastType, UserRole } from '../types';
 import { ROLES } from '../constants';
 import { MessageSquare, Send, Bell, Users, History, Share2 } from 'lucide-react';
@@ -31,9 +30,8 @@ export default function Broadcasts() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'broadcasts'), orderBy('sentAt', 'desc'));
-      const snap = await getDocs(q);
-      setBroadcasts(snap.docs.map(d => ({ id: d.id, ...d.data() } as Broadcast)));
+      const records = await apiList<Broadcast>(id, 'broadcasts');
+      setBroadcasts(records.sort((a, b) => String(b.sentAt).localeCompare(String(a.sentAt))));
     } catch (error) {
       console.error(error);
     } finally {
@@ -60,7 +58,7 @@ export default function Broadcasts() {
         type: formData.type
       };
 
-      await addDoc(collection(db, 'committees', id, 'broadcasts'), broadcastData);
+      await apiCreate<Broadcast>(id, 'broadcasts', broadcastData);
       setFormData({ message: '', type: 'General', targetRoles: 'all' });
       setIsAdding(false);
       fetchBroadcasts();

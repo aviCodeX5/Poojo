@@ -77,6 +77,30 @@ async function sha256Hex(value: string) {
     .join('');
 }
 
+async function pbkdf2Hash(password: string, salt = randomToken(16), iterations = 100000) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits'],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', hash: 'SHA-256', salt: new TextEncoder().encode(salt), iterations },
+    key,
+    256,
+  );
+  const hash = [...new Uint8Array(bits)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return `pbkdf2_sha256$${iterations}$${salt}$${hash}`;
+}
+
+async function verifyPassword(password: string, storedHash: string) {
+  const [algorithm, iterationsText, salt, expectedHash] = storedHash.split('$');
+  if (algorithm !== 'pbkdf2_sha256' || !iterationsText || !salt || !expectedHash) return false;
+  const computed = await pbkdf2Hash(password, salt, Number(iterationsText));
+  return computed === storedHash;
+}
+
 function randomToken(byteLength = 32) {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
@@ -94,6 +118,14 @@ function normalizeIndianPhone(value: string) {
   if (digits.length === 10) return `+91${digits}`;
   if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
   return value.trim();
+}
+
+function makeId(prefix = 'rec') {
+  return `${prefix}-${Date.now()}-${randomToken(6)}`;
+}
+
+function normalizeRecordId(value: string) {
+  return value.replace(/[^a-zA-Z0-9_.+\-]/g, '_').slice(0, 128);
 }
 
 function committeeFromRow(row: any) {
@@ -282,6 +314,181 @@ async function handleMemberLogin(request: Request, env: Env) {
   });
 }
 
+async function createSession(db: any, userType: 'ADMIN' | 'MEMBER', committeeId: string, memberId?: string | null, email?: string | null) {
+  const token = randomToken();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  await db.prepare(`
+    INSERT INTO sessions (id, user_type, committee_id, member_id, email, created_at, expires_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).bind(token, userType, committeeId, memberId || null, email || null, now.toISOString(), expiresAt.toISOString()).run();
+  return { token, expiresAt: expiresAt.toISOString() };
+}
+
+async function sendVerificationEmail(env: Env, email: string, code: string, expiresAt: string) {
+  if (env.EMAIL_VERIFICATION_DEV_MODE === 'true') {
+    return { delivery: 'development', developmentCode: code };
+  }
+
+  if (!env.RESEND_API_KEY) throw new Error('Resend email provider is not configured');
+  const from = env.RESEND_FROM_EMAIL || 'SamitiBook <onboarding@resend.dev>';
+  const resendResponse = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: email,
+      subject: 'Your SamitiBook verification code',
+      text: `Your SamitiBook verification code is ${code}. This code expires in 5 minutes. If you did not request this, ignore this email.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
+          <h2 style="margin: 0 0 12px;">SamitiBook verification</h2>
+          <p>Your verification code is:</p>
+          <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; color: #2563eb;">${escapeHtml(code)}</p>
+          <p>This code expires in 5 minutes.</p>
+          <p style="color: #64748b; font-size: 13px;">If you did not request this, you can safely ignore this email.</p>
+        </div>
+      `,
+    }),
+  });
+  const resendResult: any = await resendResponse.json().catch(() => ({}));
+  if (!resendResponse.ok) {
+    throw new Error(resendResult?.message || resendResult?.error?.message || 'Resend email delivery failed');
+  }
+  return { delivery: 'sent', emailId: resendResult?.id, expiresAt };
+}
+
+function committeeIdFromRegistration(data: any) {
+  const year = new Date().getFullYear();
+  const type = String(data.pujaType || 'PUJA').slice(0, 3).toUpperCase();
+  const city = String(data.city || 'CITY').slice(0, 3).toUpperCase();
+  return normalizeRecordId(`${type}-${year}-${city}-${Math.floor(1000 + Math.random() * 9000)}`);
+}
+
+async function handleAdminRegisterStart(request: Request, env: Env) {
+  if (request.method !== 'POST') return errorJson('Method Not Allowed', 405);
+  const db = requireD1(env);
+  const body = await readJson(request);
+  const email = String(body.email || '').trim().toLowerCase();
+  const password = String(body.password || '');
+  if (!email || !email.includes('@') || password.length < 6) return errorJson('Valid email and password are required');
+
+  const existingAdmin = await db.prepare('SELECT email FROM admin_users WHERE email = ?').bind(email).first();
+  if (existingAdmin) return errorJson('An admin account already exists for this email', 409);
+
+  const duplicateCommittee = await db.prepare(`
+    SELECT id FROM committees
+    WHERE lower(name) = lower(?) AND lower(city) = lower(?) AND pincode = ?
+    LIMIT 1
+  `).bind(body.name || '', body.city || '', body.pincode || '').first();
+  if (duplicateCommittee) return errorJson('A committee with this name and location already exists', 409);
+
+  const code = randomNumericCode();
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 5 * 60 * 1000);
+  await db.prepare(`
+    INSERT INTO pending_admin_registrations (id, email, password_hash, registration_json, code_hash, created_at, expires_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(email) DO UPDATE SET
+      password_hash = excluded.password_hash,
+      registration_json = excluded.registration_json,
+      code_hash = excluded.code_hash,
+      created_at = excluded.created_at,
+      expires_at = excluded.expires_at
+  `).bind(
+    makeId('pending-admin'),
+    email,
+    await pbkdf2Hash(password),
+    JSON.stringify(body),
+    await sha256Hex(code),
+    now.toISOString(),
+    expiresAt.toISOString(),
+  ).run();
+
+  const delivery = await sendVerificationEmail(env, email, code, expiresAt.toISOString());
+  return json({ ok: true, email, expiresAt: expiresAt.toISOString(), ...delivery });
+}
+
+async function handleAdminRegisterConfirm(request: Request, env: Env) {
+  if (request.method !== 'POST') return errorJson('Method Not Allowed', 405);
+  const db = requireD1(env);
+  const body = await readJson(request);
+  const email = String(body.email || '').trim().toLowerCase();
+  const code = String(body.code || '').trim();
+  const pending = await db.prepare(`
+    SELECT * FROM pending_admin_registrations
+    WHERE email = ? AND code_hash = ? AND expires_at > ?
+    LIMIT 1
+  `).bind(email, await sha256Hex(code), new Date().toISOString()).first();
+  if (!pending) return errorJson('Invalid or expired verification code', 401);
+
+  const data = JSON.parse(pending.registration_json);
+  const now = new Date().toISOString();
+  let committeeId = committeeIdFromRegistration(data);
+  for (let i = 0; i < 5; i++) {
+    const exists = await db.prepare('SELECT id FROM committees WHERE id = ?').bind(committeeId).first();
+    if (!exists) break;
+    committeeId = committeeIdFromRegistration(data);
+  }
+
+  const phone = normalizeIndianPhone(String(data.adminPhone || ''));
+  await db.batch([
+    db.prepare(`
+      INSERT INTO committees (
+        id, name, puja_type, city, state, pincode, pandal_address, pandal_lat, pandal_lng,
+        founded_year, admin_email, admin_phone, current_edition_id, current_year, is_active, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, 1, ?)
+    `).bind(
+      committeeId,
+      data.name,
+      data.pujaType,
+      data.city,
+      data.state,
+      data.pincode,
+      data.pandalAddress || data.selectedLocation?.address || '',
+      Number(data.pandalLatLng?.lat ?? data.selectedLocation?.lat ?? 0),
+      Number(data.pandalLatLng?.lng ?? data.selectedLocation?.lng ?? 0),
+      new Date().getFullYear(),
+      email,
+      phone,
+      new Date().getFullYear(),
+      now,
+    ),
+    db.prepare(`
+      INSERT INTO admin_users (id, email, password_hash, committee_id, created_at, verified_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(makeId('admin'), email, pending.password_hash, committeeId, now, now),
+    db.prepare(`
+      INSERT INTO members (committee_id, member_id, name, phone, role, address, login_code, added_at, added_by, is_active)
+      VALUES (?, ?, 'Administrator', ?, 'ADMIN', 'Primary admin', ?, ?, ?, 1)
+    `).bind(committeeId, phone, phone, 'ADMIN01', now, email),
+    db.prepare('DELETE FROM pending_admin_registrations WHERE email = ?').bind(email),
+  ]);
+
+  const committee = await db.prepare('SELECT * FROM committees WHERE id = ?').bind(committeeId).first();
+  const session = await createSession(db, 'ADMIN', committeeId, null, email);
+  return json({ ...session, committee: committeeFromRow(committee), user: { uid: email, email, type: 'ADMIN' } });
+}
+
+async function handleAdminLogin(request: Request, env: Env) {
+  if (request.method !== 'POST') return errorJson('Method Not Allowed', 405);
+  const db = requireD1(env);
+  const body = await readJson(request);
+  const email = String(body.email || '').trim().toLowerCase();
+  const password = String(body.password || '');
+  const admin = await db.prepare('SELECT * FROM admin_users WHERE email = ?').bind(email).first();
+  if (!admin || !(await verifyPassword(password, admin.password_hash))) {
+    return errorJson('Invalid email or password', 401);
+  }
+  const committee = await db.prepare('SELECT * FROM committees WHERE id = ? AND is_active = 1').bind(admin.committee_id).first();
+  if (!committee) return errorJson('Committee is inactive or unavailable', 403);
+  const session = await createSession(db, 'ADMIN', admin.committee_id, null, email);
+  return json({ ...session, committee: committeeFromRow(committee), user: { uid: email, email, type: 'ADMIN' } });
+}
+
 async function getSessionContext(request: Request, env: Env) {
   const token = getBearerToken(request);
   if (!token) return null;
@@ -352,54 +559,11 @@ async function handleEmailVerificationRequest(request: Request, env: Env) {
     VALUES (?, ?, ?, ?, ?, NULL)
   `).bind(randomToken(16), email, codeHash, now.toISOString(), expiresAt.toISOString()).run();
 
-  if (env.EMAIL_VERIFICATION_DEV_MODE === 'true') {
-    return json({
-      ok: true,
-      delivery: 'development',
-      expiresAt: expiresAt.toISOString(),
-      developmentCode: code,
-    });
-  }
-
-  const resendApiKey = env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    return errorJson('Resend email provider is not configured', 500);
-  }
-
-  const from = env.RESEND_FROM_EMAIL || 'SamitiBook <onboarding@resend.dev>';
-  const resendResponse = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from,
-      to: email,
-      subject: 'Your SamitiBook verification code',
-      text: `Your SamitiBook verification code is ${code}. This code expires in 5 minutes. If you did not request this, ignore this email.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-          <h2 style="margin: 0 0 12px;">SamitiBook verification</h2>
-          <p>Your verification code is:</p>
-          <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; color: #2563eb;">${escapeHtml(code)}</p>
-          <p>This code expires in 5 minutes.</p>
-          <p style="color: #64748b; font-size: 13px;">If you did not request this, you can safely ignore this email.</p>
-        </div>
-      `,
-    }),
-  });
-
-  const resendResult: any = await resendResponse.json().catch(() => ({}));
-  if (!resendResponse.ok) {
-    return errorJson(resendResult?.message || resendResult?.error?.message || 'Resend email delivery failed', 502);
-  }
-
+  const delivery = await sendVerificationEmail(env, email, code, expiresAt.toISOString());
   return json({
     ok: true,
-    delivery: 'sent',
     expiresAt: expiresAt.toISOString(),
-    emailId: resendResult?.id,
+    ...delivery,
   });
 }
 
@@ -430,42 +594,136 @@ async function handleEmailVerificationConfirm(request: Request, env: Env) {
 }
 
 async function handleD1Collection(request: Request, env: Env, url: URL) {
-  if (request.method !== 'GET') return errorJson('Method Not Allowed', 405);
   const context = await getSessionContext(request, env);
   if (!context) return errorJson('Session not found', 401);
 
   const parts = url.pathname.split('/').filter(Boolean);
-  const committeeId = parts[2];
-  const collectionName = parts[3];
+  const committeeId = parts[3];
+  const collectionName = parts[4];
+  const recordId = parts[5];
   if (committeeId !== context.session.committee_id) return errorJson('Forbidden', 403);
 
-  if (!collectionName) {
+  if (!collectionName && request.method === 'GET') {
     return json({
       committee: committeeFromRow(context.committee),
       member: memberFromRow(context.member),
     });
   }
 
-  if (collectionName === 'members') {
+  if (!collectionName) return errorJson('Collection name is required');
+
+  if (request.method === 'GET' && collectionName === 'members') {
     const result = await env.DB.prepare('SELECT * FROM members WHERE committee_id = ? ORDER BY role, name')
       .bind(committeeId)
       .all();
     return json({ records: (result.results || []).map(memberFromRow) });
   }
 
-  const result = await env.DB.prepare(`
+  if (request.method === 'GET') {
+    const result = await env.DB.prepare(`
     SELECT record_id, data_json
     FROM collection_records
     WHERE committee_id = ? AND collection_name = ?
     ORDER BY updated_at DESC
-  `).bind(committeeId, collectionName).all();
+    `).bind(committeeId, collectionName).all();
 
-  return json({
-    records: (result.results || []).map((row: any) => ({
-      id: row.record_id,
-      ...JSON.parse(row.data_json),
-    })),
-  });
+    return json({
+      records: (result.results || []).map((row: any) => ({
+        id: row.record_id,
+        ...JSON.parse(row.data_json),
+      })),
+    });
+  }
+
+  if (collectionName === 'members') {
+    const body = await readJson(request);
+    if (request.method === 'POST') {
+      const id = normalizeRecordId(body.memberId || body.phone || makeId('member'));
+      await env.DB.prepare(`
+        INSERT INTO members (committee_id, member_id, name, phone, role, address, login_code, added_at, added_by, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+      `).bind(committeeId, id, body.name, body.phone || id, body.role || 'MEMBER', body.address || '', body.loginCode || '', body.addedAt || new Date().toISOString(), body.addedBy || context.session.email || context.session.member_id).run();
+      return json({ id, record: { ...body, memberId: id } }, { status: 201 });
+    }
+    if (!recordId) return errorJson('Member id is required');
+    if (request.method === 'PATCH' || request.method === 'PUT') {
+      const updates = await readJson(request);
+      const current = await env.DB.prepare('SELECT * FROM members WHERE committee_id = ? AND member_id = ?').bind(committeeId, recordId).first();
+      if (!current) return errorJson('Member not found', 404);
+      const next = { ...memberFromRow(current), ...updates };
+      await env.DB.prepare(`
+        UPDATE members SET name = ?, phone = ?, role = ?, address = ?, login_code = ?, is_active = ?
+        WHERE committee_id = ? AND member_id = ?
+      `).bind(next.name, next.phone, next.role, next.address || '', next.loginCode || '', next.isActive === false ? 0 : 1, committeeId, recordId).run();
+      return json({ id: recordId, record: next });
+    }
+    if (request.method === 'DELETE') {
+      await env.DB.prepare('DELETE FROM members WHERE committee_id = ? AND member_id = ?').bind(committeeId, recordId).run();
+      return json({ ok: true });
+    }
+  }
+
+  if (collectionName === 'committee' && (request.method === 'PATCH' || request.method === 'PUT')) {
+    const body = await readJson(request);
+    await env.DB.prepare(`
+      UPDATE committees SET name = ?, puja_type = ?, city = ?, state = ?, pincode = ?, pandal_address = ?, pandal_lat = ?, pandal_lng = ?, current_edition_id = ?, current_year = ?
+      WHERE id = ?
+    `).bind(
+      body.name ?? context.committee.name,
+      body.pujaType ?? context.committee.puja_type,
+      body.city ?? context.committee.city,
+      body.state ?? context.committee.state,
+      body.pincode ?? context.committee.pincode,
+      body.pandalAddress ?? context.committee.pandal_address,
+      Number(body.pandalLatLng?.lat ?? context.committee.pandal_lat),
+      Number(body.pandalLatLng?.lng ?? context.committee.pandal_lng),
+      body.currentEditionId ?? context.committee.current_edition_id,
+      body.currentYear ?? context.committee.current_year,
+      committeeId,
+    ).run();
+    const committee = await env.DB.prepare('SELECT * FROM committees WHERE id = ?').bind(committeeId).first();
+    return json({ record: committeeFromRow(committee) });
+  }
+
+  if (request.method === 'POST') {
+    const body = await readJson(request);
+    const id = normalizeRecordId(body.id || makeId(collectionName));
+    const now = new Date().toISOString();
+    await env.DB.prepare(`
+      INSERT INTO collection_records (committee_id, collection_name, record_id, data_json, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).bind(committeeId, collectionName, id, JSON.stringify({ ...body, id }), now, now).run();
+    return json({ id, record: { ...body, id } }, { status: 201 });
+  }
+
+  if (!recordId) return errorJson('Record id is required');
+  if (request.method === 'PATCH' || request.method === 'PUT') {
+    const body = await readJson(request);
+    const existing = await env.DB.prepare(`
+      SELECT data_json FROM collection_records
+      WHERE committee_id = ? AND collection_name = ? AND record_id = ?
+    `).bind(committeeId, collectionName, recordId).first();
+    const current = existing ? JSON.parse(existing.data_json) : { id: recordId };
+    const next = { ...current, ...body, id: recordId };
+    await env.DB.prepare(`
+      INSERT INTO collection_records (committee_id, collection_name, record_id, data_json, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(committee_id, collection_name, record_id) DO UPDATE SET
+        data_json = excluded.data_json,
+        updated_at = excluded.updated_at
+    `).bind(committeeId, collectionName, recordId, JSON.stringify(next), new Date().toISOString(), new Date().toISOString()).run();
+    return json({ id: recordId, record: next });
+  }
+
+  if (request.method === 'DELETE') {
+    await env.DB.prepare(`
+      DELETE FROM collection_records
+      WHERE committee_id = ? AND collection_name = ? AND record_id = ?
+    `).bind(committeeId, collectionName, recordId).run();
+    return json({ ok: true });
+  }
+
+  return errorJson('Method Not Allowed', 405);
 }
 
 export default {
@@ -482,6 +740,9 @@ export default {
 
     try {
       if (url.pathname === '/api/auth/member-login') return handleMemberLogin(request, env);
+      if (url.pathname === '/api/auth/admin-register/start') return handleAdminRegisterStart(request, env);
+      if (url.pathname === '/api/auth/admin-register/confirm') return handleAdminRegisterConfirm(request, env);
+      if (url.pathname === '/api/auth/admin-login') return handleAdminLogin(request, env);
       if (url.pathname === '/api/auth/session') return handleSession(request, env);
       if (url.pathname === '/api/auth/logout') return handleLogout(request, env);
       if (url.pathname === '/api/auth/email-verification/request') return handleEmailVerificationRequest(request, env);

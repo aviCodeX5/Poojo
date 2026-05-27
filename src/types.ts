@@ -32,6 +32,7 @@ export interface PujaEdition {
 }
 
 export interface Committee {
+  id?: string;
   committeeId: string;
   name: string;
   pujaType: PujaType; // Default/current puja type
@@ -59,7 +60,6 @@ export interface Member {
   addedAt: any;
   addedBy: string;
   isActive: boolean;
-  firebaseUID?: string;
   address?: string;
   loginCode?: string;
 }

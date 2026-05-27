@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy, where } from 'firebase/firestore';
+import { apiCreate, apiList } from '../lib/api';
 import { InventoryItem, InventoryModule } from '../types';
 import { Box, Plus, TrendingUp, ShoppingBag, Package, Truck, AlertCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -45,12 +44,8 @@ export default function Inventory() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(
-        collection(db, 'committees', id, 'inventory'),
-        where('module', '==', activeModule)
-      );
-      const snap = await getDocs(q);
-      setItems(snap.docs.map(d => ({ id: d.id, ...d.data() } as InventoryItem)));
+      const records = await apiList<InventoryItem>(id, 'inventory');
+      setItems(records.filter(item => item.module === activeModule));
     } catch (error) {
       console.error(error);
     } finally {
@@ -80,7 +75,7 @@ export default function Inventory() {
         enteredBy: member?.memberId || 'ADMIN'
       };
 
-      await addDoc(collection(db, 'committees', id, 'inventory'), itemData);
+      await apiCreate<InventoryItem>(id, 'inventory', itemData);
       setFormData({
         itemName: '', unit: '', vendorName: '',
         quantityPurchased: '', quantityUsed: '', pricePerUnit: ''

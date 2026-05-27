@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { apiCreate, apiDelete, apiList, apiUpdate } from '../lib/api';
 import { Member, CustomRole } from '../types';
 import { Plus, Trash2, UserPlus, Shield, X, Save } from 'lucide-react';
 
@@ -40,15 +39,10 @@ export default function RoleManagement() {
       const id = committee.id || committee.committeeId;
       
       // Fetch members
-      const membersQuery = query(collection(db, 'committees', id, 'members'));
-      const membersSnap = await getDocs(membersQuery);
-      const membersList = membersSnap.docs.map(d => d.data() as Member);
+      const membersList = await apiList<Member>(id, 'members');
       setMembers(membersList);
 
-      // Fetch custom roles
-      const rolesQuery = query(collection(db, 'committees', id, 'customRoles'));
-      const rolesSnap = await getDocs(rolesQuery);
-      const rolesList = rolesSnap.docs.map(d => ({ id: d.id, ...d.data() } as CustomRole));
+      const rolesList = await apiList<CustomRole>(id, 'customRoles');
       setCustomRoles(rolesList);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -61,7 +55,7 @@ export default function RoleManagement() {
     if (!committee || !newRoleName.trim()) return;
     try {
       const id = committee.id || committee.committeeId;
-      await addDoc(collection(db, 'committees', id, 'customRoles'), {
+      await apiCreate<CustomRole>(id, 'customRoles', {
         name: newRoleName.trim().toUpperCase(),
         description: newRoleDescription.trim(),
         permissions: [], // Default permissions - can be extended later
@@ -84,7 +78,7 @@ export default function RoleManagement() {
     if (!confirm('Are you sure you want to delete this role?')) return;
     try {
       const id = committee.id || committee.committeeId;
-      await deleteDoc(doc(db, 'committees', id, 'customRoles', roleId));
+      await apiDelete(id, 'customRoles', roleId);
       fetchData();
       alert('Role deleted successfully');
     } catch (error) {
@@ -97,7 +91,7 @@ export default function RoleManagement() {
     if (!committee || !selectedMember || !selectedRole) return;
     try {
       const id = committee.id || committee.committeeId;
-      await updateDoc(doc(db, 'committees', id, 'members', selectedMember), {
+      await apiUpdate<Member>(id, 'members', selectedMember, {
         role: selectedRole
       });
       setSelectedMember('');

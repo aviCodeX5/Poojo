@@ -3,14 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth, db } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { LanguageSelector } from '../components/language/LanguageSelector';
+import { useAuth } from '../hooks/useAuth';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -23,6 +21,7 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { loginWithAdminPassword } = useAuth();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -32,18 +31,8 @@ export default function Login() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
-      
-      // Find the committee this admin belongs to
-      const q = query(collection(db, 'committees'), where('adminUID', '==', userCredential.user.uid));
-      const snap = await getDocs(q);
-      
-      if (!snap.empty) {
-        const commId = snap.docs[0].id;
-        navigate(`/${commId}/dashboard`);
-      } else {
-        setError("Account found but no committee associated with this admin.");
-      }
+      const commId = await loginWithAdminPassword(data.email, data.password);
+      navigate(`/${commId}/dashboard`);
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Login failed. Please check your credentials.');

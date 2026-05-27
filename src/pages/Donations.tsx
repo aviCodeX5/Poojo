@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy } from 'firebase/firestore';
+import { apiCreate, apiList } from '../lib/api';
 import { Donation, DonationType } from '../types';
 import { Plus, Download, Share2, DollarSign, Gift, CreditCard, Landmark, FileText } from 'lucide-react';
 import { format } from 'date-fns';
@@ -35,9 +34,8 @@ export default function Donations() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'donations'), orderBy('date', 'desc'));
-      const snap = await getDocs(q);
-      setDonations(snap.docs.map(d => ({ id: d.id, ...d.data() } as Donation)));
+      const records = await apiList<Donation>(id, 'donations');
+      setDonations(records.sort((a, b) => String(b.date).localeCompare(String(a.date))));
     } catch (error) {
       console.error(error);
     } finally {
@@ -77,7 +75,7 @@ export default function Donations() {
         donationData.editionId = currentEdition.id;
       }
 
-      await addDoc(collection(db, 'committees', id, 'donations'), donationData);
+      await apiCreate<Donation>(id, 'donations', donationData);
       setFormData({ donorName: '', donorPhone: '', amount: '', donationType: 'Cash', kindDescription: '', estimatedValue: '' });
       setIsAdding(false);
       fetchDonations();

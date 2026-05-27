@@ -110,7 +110,7 @@ export default function Landing() {
             <FeatureCard icon={<Landmark className="h-5 w-5" />} title="Finance Records" description="Track chanda, donations, expenses, and receipts in one place." />
             <FeatureCard icon={<BarChart3 className="h-5 w-5" />} title="Simple Analytics" description="Understand collection progress, spending, and surplus quickly." />
             <FeatureCard icon={<MessageSquare className="h-5 w-5" />} title="Broadcasts" description="Send clear updates to the committee and role groups." />
-            <FeatureCard icon={<ShieldCheck className="h-5 w-5" />} title="Secure Rules" description="Firebase-backed access rules protect committee data." />
+            <FeatureCard icon={<ShieldCheck className="h-5 w-5" />} title="Secure Access" description="D1-backed sessions protect committee data." />
             <FeatureCard icon={<Search className="h-5 w-5" />} title="Easy Lookup" description="Use committee IDs to keep demo and real workflows organized." />
           </div>
         </section>

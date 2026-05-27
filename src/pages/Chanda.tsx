@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, doc, setDoc, updateDoc, addDoc, where } from 'firebase/firestore';
+import { apiCreate, apiList, apiUpdate } from '../lib/api';
 import { ChandaEntry } from '../types';
 import { Plus, Check, X, FileText, Download, Share2, History, Clock } from 'lucide-react';
 import { format } from 'date-fns';
@@ -37,8 +36,7 @@ export default function Chanda() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const snap = await getDocs(collection(db, 'committees', id, 'chandaEntries'));
-      setEntries(snap.docs.map(d => ({ id: d.id, ...d.data() } as ChandaEntry)));
+      setEntries(await apiList<ChandaEntry>(id, 'chandaEntries'));
     } catch (error) {
       console.error(error);
     } finally {
@@ -85,7 +83,7 @@ export default function Chanda() {
         entryData.approvedAt = new Date().toISOString();
       }
 
-      await addDoc(collection(db, 'committees', id, 'chandaEntries'), entryData);
+      await apiCreate<ChandaEntry>(id, 'chandaEntries', entryData);
       setFormData({ donorName: '', donorPhone: '', donorAddress: '', amount: '', notes: '' });
       setIsAdding(false);
       fetchEntries();
@@ -99,8 +97,7 @@ export default function Chanda() {
     if (!committee) return;
     try {
       const id = committee.id || committee.committeeId;
-      const entryRef = doc(db, 'committees', id, 'chandaEntries', entryId);
-      await updateDoc(entryRef, {
+      await apiUpdate<ChandaEntry>(id, 'chandaEntries', entryId, {
         status: 'Approved',
         approvedBy: member?.memberId || 'ADMIN',
         approvedAt: new Date().toISOString()

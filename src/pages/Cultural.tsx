@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy } from 'firebase/firestore';
+import { apiCreate, apiList } from '../lib/api';
 import { CulturalEvent } from '../types';
 import { Music, Plus, Users, Clock, Calendar, MessageSquare, Mic2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -33,9 +32,8 @@ export default function Cultural() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'culturalEvents'), orderBy('date', 'asc'));
-      const snap = await getDocs(q);
-      setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as CulturalEvent)));
+      const records = await apiList<CulturalEvent>(id, 'culturalEvents');
+      setEvents(records.sort((a, b) => String(a.date).localeCompare(String(b.date))));
     } catch (error) {
       console.error(error);
     } finally {
@@ -65,7 +63,7 @@ export default function Cultural() {
         enteredBy: member?.memberId || 'ADMIN'
       };
 
-      await addDoc(collection(db, 'committees', id, 'culturalEvents'), eventData);
+      await apiCreate<CulturalEvent>(id, 'culturalEvents', eventData);
       setFormData({
         eventName: '', 
         date: format(new Date(), 'yyyy-MM-dd'),

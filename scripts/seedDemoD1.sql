@@ -54,6 +54,19 @@ ON CONFLICT(committee_id, member_id) DO UPDATE SET
   login_code = excluded.login_code,
   is_active = excluded.is_active;
 
+INSERT INTO admin_users (id, email, password_hash, committee_id, created_at, verified_at) VALUES (
+  'admin-demo-admin-samitibook-app',
+  'demo.admin@samitibook.app',
+  'pbkdf2_sha256$100000$demo-admin-salt$95c2487ac9ca3bd5f376b22dd42324014311b8a412410d3bd931e0712d674c40',
+  'DUR-2026-KOL-0001',
+  '2026-05-26T00:00:00.000Z',
+  '2026-05-26T00:00:00.000Z'
+)
+ON CONFLICT(email) DO UPDATE SET
+  password_hash = excluded.password_hash,
+  committee_id = excluded.committee_id,
+  verified_at = excluded.verified_at;
+
 INSERT INTO collection_records (committee_id, collection_name, record_id, data_json, created_at, updated_at) VALUES
   ('DUR-2026-KOL-0001', 'editions', 'durga-2026', '{"id":"durga-2026","year":2026,"pujaType":"Durga","editionName":"40th Year Community Celebration","startDate":"2026-10-17","endDate":"2026-10-24","isActive":true,"createdAt":"2026-05-26T00:00:00.000Z","createdBy":"+919876500001","committeeDesignation":"Lakeview Sarbojanin Durga Puja Committee","budget":850000,"theme":"River, Roots and Renewal"}', '2026-05-26T00:00:00.000Z', '2026-05-26T00:00:00.000Z'),
   ('DUR-2026-KOL-0001', 'donations', 'DON-001', '{"donorName":"Eastern Hardware Stores","donorPhone":"+913340001111","amount":75000,"donationType":"Sponsor","date":"2026-08-10T10:30:00.000Z","year":2026,"editionId":"durga-2026","enteredBy":"+919876500001","receiptNumber":"DUR-2026-KOL-0001/DON/2026/0001","receiptSent":false}', '2026-05-26T00:00:00.000Z', '2026-05-26T00:00:00.000Z'),

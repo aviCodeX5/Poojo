@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/layout/Layout';
 import { Card } from '../components/ui/Card';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { apiList } from '../lib/api';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   LineChart, Line, Legend, AreaChart, Area
@@ -31,9 +30,8 @@ export default function Analytics() {
         const id = committee.id || committee.committeeId;
         const curYear = new Date().getFullYear();
         
-        const expensesSnap = await getDocs(collection(db, 'committees', id, 'expenses'));
-        const chandaSnap = await getDocs(collection(db, 'committees', id, 'chandaEntries'));
-        const donationsSnap = await getDocs(collection(db, 'committees', id, 'donations'));
+        const expenses = await apiList<any>(id, 'expenses');
+        const chanda = await apiList<any>(id, 'chandaEntries');
 
         // Process for insights engine
         const expensesByYear: Record<number, Record<string, number>> = {};
@@ -43,15 +41,13 @@ export default function Analytics() {
         expensesByYear[curYear - 1] = { 'Decoration': 10000, 'Lighting': 5000 };
         chandaByYear[curYear - 1] = 50000;
 
-        expensesSnap.docs.forEach(doc => {
-          const d = doc.data();
+        expenses.forEach(d => {
           const y = d.year || curYear;
           if (!expensesByYear[y]) expensesByYear[y] = {};
           expensesByYear[y][d.category] = (expensesByYear[y][d.category] || 0) + (d.amount || 0);
         });
 
-        chandaSnap.docs.forEach(doc => {
-          const d = doc.data();
+        chanda.forEach(d => {
           const y = d.year || curYear;
           chandaByYear[y] = (chandaByYear[y] || 0) + (d.amount || 0);
         });
@@ -68,8 +64,7 @@ export default function Analytics() {
 
         // Chart Data
         const categoryData: Record<string, number> = {};
-        expensesSnap.docs.forEach(doc => {
-          const d = doc.data();
+        expenses.forEach(d => {
           categoryData[d.category] = (categoryData[d.category] || 0) + (d.amount || 0);
         });
 

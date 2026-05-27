@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 test.describe.serial('SamitiBook full role and operations flow', () => {
   test.setTimeout(180_000);
-  test.skip(({ browserName }) => browserName !== 'chromium', 'Firebase-backed E2E data setup is exercised in Chromium.');
+  test.skip(({ browserName }) => browserName !== 'chromium', 'D1-backed E2E data setup is exercised in Chromium.');
 
   const runId = `${Date.now()}`;
   const suffix = runId.slice(-6);

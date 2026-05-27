@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy } from 'firebase/firestore';
+import { apiCreate, apiList } from '../lib/api';
 import { MandapSchedule } from '../types';
 import { Flower2, Plus, Users, Clock, Calendar, Bookmark, IndianRupee } from 'lucide-react';
 import { format } from 'date-fns';
@@ -35,9 +34,8 @@ export default function Mandap() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'mandapSchedule'), orderBy('day', 'asc'));
-      const snap = await getDocs(q);
-      setSchedules(snap.docs.map(d => ({ id: d.id, ...d.data() } as MandapSchedule)));
+      const records = await apiList<MandapSchedule>(id, 'mandapSchedule');
+      setSchedules(records.sort((a, b) => a.day - b.day));
     } catch (error) {
       console.error(error);
     } finally {
@@ -68,7 +66,7 @@ export default function Mandap() {
         enteredBy: member?.memberId || 'ADMIN'
       };
 
-      await addDoc(collection(db, 'committees', id, 'mandapSchedule'), scheduleData);
+      await apiCreate<MandapSchedule>(id, 'mandapSchedule', scheduleData);
       setFormData({
         day: '', 
         date: format(new Date(), 'yyyy-MM-dd'),

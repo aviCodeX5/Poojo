@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
+import { apiList } from '../lib/api';
 import { AuditLog } from '../types';
 import { History, Filter, Download, Eye, User, Calendar, FileText, Search } from 'lucide-react';
 import { format } from 'date-fns';
@@ -25,16 +24,8 @@ export default function AuditLogPage() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(
-        collection(db, 'auditLog'),
-        orderBy('when', 'desc'),
-        limit(100)
-      );
-      const snap = await getDocs(q);
-      const allLogs = snap.docs.map(d => ({ id: d.id, ...d.data() } as AuditLog));
-      // Filter logs for current committee
-      const committeeLogs = allLogs.filter(log => log.committeeId === id);
-      setLogs(committeeLogs);
+      const logs = await apiList<AuditLog>(id, 'auditLog');
+      setLogs(logs.sort((a, b) => String(b.when).localeCompare(String(a.when))).slice(0, 100));
     } catch (error) {
       console.error(error);
     } finally {

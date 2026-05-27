@@ -5,8 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
-import { db } from '../firebase';
-import { collection, query, getDocs, addDoc, orderBy, setDoc, doc } from 'firebase/firestore';
+import { apiCreate, apiList } from '../lib/api';
 import { Expense, ExpenseCategory, CustomCategory } from '../types';
 import { EXPENSE_CATEGORIES } from '../constants';
 import { Plus, Receipt, ShoppingCart, Tag, User, Camera, Calendar, Upload, X, PlusCircle } from 'lucide-react';
@@ -89,9 +88,8 @@ export default function Expenses() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'expenses'), orderBy('date', 'desc'));
-      const snap = await getDocs(q);
-      let allExpenses = snap.docs.map(d => ({ id: d.id, ...d.data() } as Expense));
+      let allExpenses = await apiList<Expense>(id, 'expenses');
+      allExpenses = allExpenses.sort((a, b) => String(b.date).localeCompare(String(a.date)));
       
       // Filter based on role if necessary for view-level scoping
       // Based on PRD, everyone can VIEW all expenses, but only certain roles can FEED specific ones.
@@ -107,9 +105,7 @@ export default function Expenses() {
     if (!committee) return;
     try {
       const id = committee.id || committee.committeeId;
-      const q = query(collection(db, 'committees', id, 'customCategories'));
-      const snap = await getDocs(q);
-      const categories = snap.docs.map(d => ({ id: d.id, ...d.data() } as CustomCategory));
+      const categories = await apiList<CustomCategory>(id, 'customCategories');
       setCustomCategories(categories);
       
       // Combine default categories with custom categories
@@ -124,8 +120,7 @@ export default function Expenses() {
     if (!committee || !newCategoryName.trim()) return;
     try {
       const id = committee.id || committee.committeeId;
-      const categoryRef = doc(collection(db, 'committees', id, 'customCategories'));
-      await setDoc(categoryRef, {
+      await apiCreate<CustomCategory>(id, 'customCategories', {
         name: newCategoryName.trim(),
         createdAt: new Date().toISOString(),
         createdBy: member?.memberId || 'ADMIN'
@@ -174,7 +169,7 @@ export default function Expenses() {
         expenseData.billPhotoURL = billPhotoURL;
       }
 
-      await addDoc(collection(db, 'committees', id, 'expenses'), expenseData);
+      await apiCreate<Expense>(id, 'expenses', expenseData);
       setFormData({
         category: (allowedCategory === 'all' ? 'Miscellaneous' : allowedCategory) as ExpenseCategory,
         amount: '',

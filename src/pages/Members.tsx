@@ -4,8 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../firebase';
-import { collection, query, getDocs, doc, setDoc, deleteDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { apiCreate, apiDelete, apiList, apiUpdate } from '../lib/api';
 import { ROLES, ROLE_COLORS } from '../constants';
 import { UserRole, Member } from '../types';
 import { motion } from 'motion/react';
@@ -37,8 +36,7 @@ export default function Members() {
     setLoading(true);
     try {
       const id = committee.id || committee.committeeId;
-      const snap = await getDocs(collection(db, 'committees', id, 'members'));
-      setMembers(snap.docs.map(d => d.data() as Member));
+      setMembers(await apiList<Member>(id, 'members'));
     } catch (error) {
       console.error(error);
     } finally {
@@ -65,11 +63,8 @@ export default function Members() {
       const id = committee.id || committee.committeeId;
       const phone = newMember.phone.startsWith('+91') ? newMember.phone : `+91${newMember.phone}`;
       
-      // Check if member with this phone number already exists
-      const memberRef = doc(db, 'committees', id, 'members', phone);
-      const existingMember = await getDoc(memberRef);
-      
-      if (existingMember.exists()) {
+      const existingMembers = await apiList<Member>(id, 'members');
+      if (existingMembers.some(m => m.memberId === phone || m.phone === phone)) {
         alert('A member with this phone number already exists!');
         return;
       }
@@ -86,7 +81,7 @@ export default function Members() {
         loginCode: generateLoginCode()
       };
 
-      await setDoc(memberRef, memberData);
+      await apiCreate<Member>(id, 'members', memberData);
       setNewMember({ name: '', phone: '', address: '', role: 'MEMBER' });
       setIsAdding(false);
       fetchMembers();
@@ -100,7 +95,7 @@ export default function Members() {
     if (!committee || !window.confirm('Are you sure you want to remove this member?')) return;
     try {
       const id = committee.id || committee.committeeId;
-      await deleteDoc(doc(db, 'committees', id, 'members', memberId));
+      await apiDelete(id, 'members', memberId);
       fetchMembers();
     } catch (error: any) {
       alert(error.message);
@@ -113,7 +108,7 @@ export default function Members() {
 
     try {
       const id = committee.id || committee.committeeId;
-      await updateDoc(doc(db, 'committees', id, 'members', memberId), {
+      await apiUpdate<Member>(id, 'members', memberId, {
         loginCode: generateLoginCode()
       });
       fetchMembers();

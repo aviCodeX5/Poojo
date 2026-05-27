@@ -4,8 +4,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
-import { db } from '../firebase';
-import { doc, updateDoc, deleteDoc, addDoc, collection, getDocs } from 'firebase/firestore';
+import { apiCreate, apiList, apiUpdate, apiUpdateCommittee } from '../lib/api';
 import { Settings as SettingsIcon, ShieldAlert, Save, Copy, Trash2, Globe, Calendar, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,7 +34,7 @@ export default function Settings() {
     setIsSaving(true);
     try {
       const id = committee.id || committee.committeeId;
-      await updateDoc(doc(db, 'committees', id), formData);
+      await apiUpdateCommittee(id, formData);
       await refreshCommittee();
       alert('Committee settings updated!');
     } catch (error: any) {
@@ -59,24 +58,22 @@ export default function Settings() {
       const id = committee.id || committee.committeeId;
 
       // Deactivate all existing editions
-      const editionsSnap = await getDocs(collection(db, 'committees', id, 'editions'));
-      for (const editionDoc of editionsSnap.docs) {
-        await updateDoc(doc(db, 'committees', id, 'editions', editionDoc.id), { isActive: false });
+      const editions = await apiList<any>(id, 'editions');
+      for (const edition of editions) {
+        await apiUpdate(id, 'editions', edition.id, { isActive: false });
       }
 
-      // Create new edition
-      const newEdition = await addDoc(collection(db, 'committees', id, 'editions'), {
+      const newEdition = await apiCreate<any>(id, 'editions', {
         year: rolloverData.year,
         pujaType: rolloverData.pujaType,
         editionName: rolloverData.editionName,
         theme: rolloverData.theme,
         isActive: true,
         createdAt: new Date().toISOString(),
-        createdBy: committee.adminUID
+        createdBy: committee.adminEmail
       });
 
-      // Update committee with current edition
-      await updateDoc(doc(db, 'committees', id), {
+      await apiUpdateCommittee(id, {
         currentEditionId: newEdition.id,
         currentYear: rolloverData.year
       });
