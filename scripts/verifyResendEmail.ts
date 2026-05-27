@@ -36,15 +36,15 @@ function assert(condition: unknown, message: string) {
 
 async function main() {
   const response = await worker.fetch(
-    new Request('https://samitibook.test/api/auth/email-verification/request', {
+    new Request('https://poojasamiti.online/api/auth/email-verification/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'demo.admin@samitibook.app' }),
+      body: JSON.stringify({ email: 'demo.admin@poojasamiti.online' }),
     }),
     {
       DB: fakeDb,
       RESEND_API_KEY: 're_test_secret',
-      RESEND_FROM_EMAIL: 'SamitiBook <verify@samitibook.app>',
+      RESEND_FROM_EMAIL: 'Pooja Samiti <verify@poojasamiti.online>',
     } as any,
   );
 
@@ -58,9 +58,9 @@ async function main() {
   assert(call.url === 'https://api.resend.com/emails', `Unexpected Resend URL: ${call.url}`);
   assert(call.init?.method === 'POST', 'Expected Resend POST request');
   assert((call.init?.headers as Record<string, string>).Authorization === 'Bearer re_test_secret', 'Expected bearer API key header');
-  assert(call.body.from === 'SamitiBook <verify@samitibook.app>', 'Expected configured sender');
-  assert(call.body.to === 'demo.admin@samitibook.app', 'Expected target email');
-  assert(String(call.body.subject).includes('SamitiBook'), 'Expected SamitiBook subject');
+  assert(call.body.from === 'Pooja Samiti <verify@poojasamiti.online>', 'Expected configured sender');
+  assert(call.body.to === 'demo.admin@poojasamiti.online', 'Expected target email');
+  assert(String(call.body.subject).includes('Pooja Samiti'), 'Expected Pooja Samiti subject');
   assert(String(call.body.text).includes('verification code'), 'Expected verification text');
 }
 
@@ -78,7 +78,7 @@ async function verifiesRegistrationEmailFailuresStayReadable() {
   }) as typeof fetch;
 
   const response = await worker.fetch(
-    new Request('https://samitibook.test/api/auth/admin-register/start', {
+    new Request('https://poojasamiti.online/api/auth/admin-register/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -97,7 +97,7 @@ async function verifiesRegistrationEmailFailuresStayReadable() {
     {
       DB: fakeDb,
       RESEND_API_KEY: 're_test_secret',
-      RESEND_FROM_EMAIL: 'SamitiBook <onboarding@resend.dev>',
+      RESEND_FROM_EMAIL: 'Pooja Samiti <no-reply@poojasamiti.online>',
     } as any,
   );
 
@@ -106,8 +106,36 @@ async function verifiesRegistrationEmailFailuresStayReadable() {
   assert(String(json.error).includes('email'), `Expected readable email error, received ${JSON.stringify(json)}`);
 }
 
+async function usesProductionDomainSenderByDefault() {
+  resendCalls.length = 0;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const body = init?.body ? JSON.parse(String(init.body)) : null;
+    resendCalls.push({ url: String(input), init, body });
+    return new Response(JSON.stringify({ id: 'email_default_sender_123' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }) as typeof fetch;
+
+  const response = await worker.fetch(
+    new Request('https://poojasamiti.online/api/auth/email-verification/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'new.admin@example.com' }),
+    }),
+    {
+      DB: fakeDb,
+      RESEND_API_KEY: 're_test_secret',
+    } as any,
+  );
+
+  assert(response.status === 200, `Expected 200, received ${response.status}`);
+  assert(resendCalls[0]?.body?.from === 'Pooja Samiti <no-reply@poojasamiti.online>', 'Expected production domain default sender');
+}
+
 main()
   .then(verifiesRegistrationEmailFailuresStayReadable)
+  .then(usesProductionDomainSenderByDefault)
   .finally(() => {
     globalThis.fetch = originalFetch;
   })

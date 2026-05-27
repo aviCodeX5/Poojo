@@ -167,7 +167,7 @@ export default function Register() {
     <div className="min-h-screen bg-background-cream py-12 px-6">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8 flex items-center justify-between">
-          <Link to="/" aria-label="SamitiBook home">
+          <Link to="/" aria-label="Pooja Samiti home">
             <BrandLogo showTagline />
           </Link>
           <LanguageSelector />

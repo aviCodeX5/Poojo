@@ -22,7 +22,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.classList.remove('dark');
     document.documentElement.classList.add('light');
-    localStorage.setItem('samitibook-theme', 'light');
+    localStorage.setItem('pooja-samiti-theme', 'light');
   }, []);
 
   return (

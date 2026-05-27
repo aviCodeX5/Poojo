@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "samitibook",
+  "name": "pooja-samiti",
   "main": "src/worker.ts",
   "compatibility_date": "2026-05-25",
   "workers_dev": true,
@@ -8,6 +8,16 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "APP_URL": "https://poojasamiti.online",
+    "RESEND_FROM_EMAIL": "Pooja Samiti <no-reply@poojasamiti.online>"
+  },
+  "routes": [
+    {
+      "pattern": "poojasamiti.online",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "directory": "dist/client",
     "not_found_handling": "single-page-application"
@@ -18,7 +28,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "samitibook",
+      "database_name": "pooja-samiti",
       "database_id": "3e1493a2-4817-4c25-9f6e-61faef0747b3"
     }
   ]

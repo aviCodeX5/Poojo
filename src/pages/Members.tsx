@@ -128,7 +128,7 @@ export default function Members() {
 
   const getWhatsAppLink = (m: Member) => {
     const codeLine = m.loginCode ? ` Your permanent login code is: ${m.loginCode}.` : '';
-    const text = `You have been added to ${committee?.name} on SamitiBook. Login using your mobile number: ${m.phone}.${codeLine} Open ${window.location.origin}/member-login`;
+    const text = `You have been added to ${committee?.name} on Pooja Samiti. Login using your mobile number: ${m.phone}.${codeLine} Open ${window.location.origin}/member-login`;
     return `https://wa.me/${m.phone.replace('+', '')}?text=${encodeURIComponent(text)}`;
   };
 

@@ -235,7 +235,7 @@ async function handleCloudinaryUpload(request: Request, env: Env) {
   const safeFileName = sanitizeSegment(rawFileName);
   const publicId = `${Date.now()}_${withoutExtension(safeFileName)}`;
   const timestamp = Math.floor(Date.now() / 1000).toString();
-  const folder = `samitibook/committees/${committeeId}/bills/${userId}`;
+  const folder = `pooja-samiti/committees/${committeeId}/bills/${userId}`;
   const signatureParams = {
     folder,
     public_id: publicId,
@@ -334,7 +334,7 @@ async function sendVerificationEmail(env: Env, email: string, code: string, expi
   }
 
   if (!env.RESEND_API_KEY) throw new Error('Resend email provider is not configured');
-  const from = env.RESEND_FROM_EMAIL || 'SamitiBook <onboarding@resend.dev>';
+  const from = env.RESEND_FROM_EMAIL || 'Pooja Samiti <no-reply@poojasamiti.online>';
   const resendResponse = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -344,11 +344,11 @@ async function sendVerificationEmail(env: Env, email: string, code: string, expi
     body: JSON.stringify({
       from,
       to: email,
-      subject: 'Your SamitiBook verification code',
-      text: `Your SamitiBook verification code is ${code}. This code expires in 5 minutes. If you did not request this, ignore this email.`,
+      subject: 'Your Pooja Samiti verification code',
+      text: `Your Pooja Samiti verification code is ${code}. This code expires in 5 minutes. If you did not request this, ignore this email.`,
       html: `
         <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
-          <h2 style="margin: 0 0 12px;">SamitiBook verification</h2>
+          <h2 style="margin: 0 0 12px;">Pooja Samiti verification</h2>
           <p>Your verification code is:</p>
           <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; color: #2563eb;">${escapeHtml(code)}</p>
           <p>This code expires in 5 minutes.</p>

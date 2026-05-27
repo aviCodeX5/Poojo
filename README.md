@@ -1,4 +1,4 @@
-# SamitiBook
+# Pooja Samiti
 
 Transparent Festival Management for committees.
 
@@ -17,9 +17,13 @@ npm run dev
 Server-side secrets are used by the Cloudflare Worker:
 
 - `CLOUDINARY_URL`: Cloudinary uploads for bills and media.
-- `RESEND_API_KEY`: Resend email provider for admin registration verification codes.
-- `RESEND_FROM_EMAIL`: Optional sender address for verification emails.
+- `RESEND_API_KEY`: Resend email provider for admin registration verification codes. Store it as a Cloudflare Worker secret.
+- `RESEND_FROM_EMAIL`: Production sender for verification emails. The default is `Pooja Samiti <no-reply@poojasamiti.online>`.
 - `APP_URL`: deployed app URL.
+
+## Production Email
+
+For every user to register with their own email, `poojasamiti.online` must be added and verified in Resend. Resend requires SPF and DKIM DNS records for the sending domain; after the domain is verified, the app can send OTP emails from any address on that domain, including `no-reply@poojasamiti.online`.
 
 ## Cloudflare
 

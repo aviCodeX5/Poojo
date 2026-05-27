@@ -210,7 +210,7 @@ export default function PujaEditions() {
               />
               <Input
                 label="Committee Designation (Optional)"
-                placeholder="e.g., Diamond Park Puja Committee"
+                placeholder="e.g., Diamond Park Pooja Samiti"
                 value={formData.committeeDesignation}
                 onChange={(e) => setFormData({...formData, committeeDesignation: e.target.value})}
               />

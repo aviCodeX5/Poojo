@@ -73,7 +73,7 @@ export default function OrgChart() {
 
     doc.setFontSize(16);
     doc.setTextColor(139, 26, 26);
-    doc.text(committee?.name || 'SamitiBook', 105, yPos, { align: 'center' });
+    doc.text(committee?.name || 'Pooja Samiti', 105, yPos, { align: 'center' });
     yPos += 10;
 
     doc.setFontSize(12);

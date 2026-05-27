@@ -38,7 +38,7 @@ export default function Landing() {
                 {t('app.tagline')}
               </div>
               <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-slate-950 md:text-7xl">
-                SamitiBook
+                {t('app.name')}
               </h1>
               <p className="mt-6 max-w-2xl text-xl font-medium leading-relaxed text-slate-600">
                 {t('landing.heroCopy')}

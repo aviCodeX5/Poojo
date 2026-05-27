@@ -1,19 +1,19 @@
 import { expect, test, type Page } from '@playwright/test';
 
-test.describe.serial('SamitiBook full role and operations flow', () => {
+test.describe.serial('Pooja Samiti full role and operations flow', () => {
   test.setTimeout(180_000);
   test.skip(({ browserName }) => browserName !== 'chromium', 'D1-backed E2E data setup is exercised in Chromium.');
 
   const runId = `${Date.now()}`;
   const suffix = runId.slice(-6);
   const committee = {
-    name: `E2E Puja Committee ${suffix}`,
+    name: `E2E Pooja Samiti ${suffix}`,
     city: 'Kolkata',
     state: 'West Bengal',
     pincode: '700001',
     pandal: 'Park Street, Kolkata',
     adminPhone: `98${suffix.padStart(8, '0')}`.slice(0, 10),
-    adminEmail: `samitibook.e2e.${runId}@example.com`,
+    adminEmail: `pooja-samiti.e2e.${runId}@example.com`,
     password: 'Test@123456',
   };
 

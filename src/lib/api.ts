@@ -1,6 +1,6 @@
 import { Committee, Member, PujaEdition } from '../types';
 
-const SESSION_TOKEN_KEY = 'samitibook.d1SessionToken';
+const SESSION_TOKEN_KEY = 'pooja-samiti.d1SessionToken';
 
 export type AppUser = {
   uid: string;

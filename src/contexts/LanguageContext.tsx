@@ -24,10 +24,10 @@ interface LanguageContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const STORAGE_KEY = 'samitibook-language';
+const STORAGE_KEY = 'pooja-samiti-language';
 
 const en = {
-  'app.name': 'SamitiBook',
+  'app.name': 'Pooja Samiti',
   'app.tagline': 'Transparent Festival Management',
   'language.label': 'Language',
   'status.online': 'System Online',
@@ -84,9 +84,9 @@ const en = {
   'landing.expenses': 'Expenses',
   'landing.members': 'Members',
   'landing.surplus': 'Surplus',
-  'landing.footer': '© 2026 SamitiBook. Transparent Festival Management.',
+  'landing.footer': '© 2026 Pooja Samiti. Transparent Festival Management.',
   'landing.registerDialogTitle': 'Before you register',
-  'landing.registerDialogIntro': 'Registration creates a new SamitiBook workspace for one real festival committee. Please read this before creating committee data.',
+  'landing.registerDialogIntro': 'Registration creates a new Pooja Samiti workspace for one real festival committee. Please read this before creating committee data.',
   'landing.registerCreatesTitle': 'What registration creates',
   'landing.registerCreatesOne': 'A committee workspace with one primary admin account.',
   'landing.registerCreatesTwo': 'A place to manage members, roles, collections, donations, expenses, inventory, broadcasts, and settings.',
@@ -411,7 +411,7 @@ const translations: Record<LanguageCode, Record<string, string>> = {
 const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
   hi: {
     'app.tagline': 'पारदर्शी उत्सव प्रबंधन',
-    'landing.footer': '© 2026 SamitiBook. पारदर्शी उत्सव प्रबंधन।',
+    'landing.footer': '© 2026 Pooja Samiti. पारदर्शी उत्सव प्रबंधन।',
     'landing.collections': 'संग्रह',
     'landing.expenses': 'खर्च',
     'landing.members': 'सदस्य',
@@ -429,7 +429,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.easyLookup': 'आसान खोज',
     'landing.easyLookupDesc': 'डेमो और वास्तविक काम अलग रखने के लिए समिति आईडी उपयोग करें।',
     'landing.registerDialogTitle': 'पंजीकरण से पहले',
-    'landing.registerDialogIntro': 'पंजीकरण एक वास्तविक उत्सव समिति के लिए नया SamitiBook कार्यक्षेत्र बनाता है। डेटा बनाने से पहले इसे पढ़ें।',
+    'landing.registerDialogIntro': 'पंजीकरण एक वास्तविक उत्सव समिति के लिए नया Pooja Samiti कार्यक्षेत्र बनाता है। डेटा बनाने से पहले इसे पढ़ें।',
     'landing.registerCreatesTitle': 'पंजीकरण क्या बनाता है',
     'landing.registerCreatesOne': 'एक प्राथमिक एडमिन खाते वाला समिति कार्यक्षेत्र।',
     'landing.registerCreatesTwo': 'सदस्य, भूमिका, संग्रह, दान, खर्च, इन्वेंटरी, घोषणाएँ और सेटिंग्स संभालने की जगह।',
@@ -454,7 +454,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
   },
   bn: {
     'app.tagline': 'স্বচ্ছ উৎসব ব্যবস্থাপনা',
-    'landing.footer': '© 2026 SamitiBook. স্বচ্ছ উৎসব ব্যবস্থাপনা।',
+    'landing.footer': '© 2026 Pooja Samiti. স্বচ্ছ উৎসব ব্যবস্থাপনা।',
     'landing.adminAccess': 'এডমিন পোর্টাল প্রবেশ',
     'landing.heroCopy': 'উৎসব কমিটির জন্য সহজ, আধুনিক অপারেটিং সিস্টেম যেখানে সদস্য, সংগ্রহ, দান, খরচ, ইনভেন্টরি এবং যোগাযোগ পরিষ্কারভাবে পরিচালনা করা যায়।',
     'landing.liveOverview': 'সরাসরি সারাংশ',
@@ -477,7 +477,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.members': 'সদস্য',
     'landing.surplus': 'উদ্বৃত্ত',
     'landing.registerDialogTitle': 'নিবন্ধনের আগে',
-    'landing.registerDialogIntro': 'নিবন্ধন একটি বাস্তব উৎসব কমিটির জন্য নতুন SamitiBook কর্মক্ষেত্র তৈরি করে। তথ্য তৈরির আগে এটি পড়ুন।',
+    'landing.registerDialogIntro': 'নিবন্ধন একটি বাস্তব উৎসব কমিটির জন্য নতুন Pooja Samiti কর্মক্ষেত্র তৈরি করে। তথ্য তৈরির আগে এটি পড়ুন।',
     'landing.registerCreatesTitle': 'নিবন্ধনে যা তৈরি হয়',
     'landing.registerCreatesOne': 'একটি প্রাথমিক এডমিন অ্যাকাউন্টসহ কমিটির কর্মক্ষেত্র।',
     'landing.registerCreatesTwo': 'সদস্য, ভূমিকা, সংগ্রহ, দান, খরচ, ইনভেন্টরি, বার্তা এবং সেটিংস পরিচালনার জায়গা।',
@@ -511,7 +511,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'செலவுகள்',
     'landing.members': 'உறுப்பினர்கள்',
     'landing.surplus': 'மீதம்',
-    'landing.footer': '© 2026 SamitiBook. வெளிப்படையான விழா மேலாண்மை.',
+    'landing.footer': '© 2026 Pooja Samiti. வெளிப்படையான விழா மேலாண்மை.',
   },
   te: {
     'app.tagline': 'పారదర్శక ఉత్సవ నిర్వహణ',
@@ -524,7 +524,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'ఖర్చులు',
     'landing.members': 'సభ్యులు',
     'landing.surplus': 'మిగులు',
-    'landing.footer': '© 2026 SamitiBook. పారదర్శక ఉత్సవ నిర్వహణ.',
+    'landing.footer': '© 2026 Pooja Samiti. పారదర్శక ఉత్సవ నిర్వహణ.',
   },
   mr: {
     'app.tagline': 'पारदर्शक उत्सव व्यवस्थापन',
@@ -537,7 +537,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'खर्च',
     'landing.members': 'सदस्य',
     'landing.surplus': 'अधिशेष',
-    'landing.footer': '© 2026 SamitiBook. पारदर्शक उत्सव व्यवस्थापन.',
+    'landing.footer': '© 2026 Pooja Samiti. पारदर्शक उत्सव व्यवस्थापन.',
   },
   gu: {
     'app.tagline': 'પારદર્શક ઉત્સવ વ્યવસ્થાપન',
@@ -550,7 +550,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'ખર્ચ',
     'landing.members': 'સભ્યો',
     'landing.surplus': 'વધારું',
-    'landing.footer': '© 2026 SamitiBook. પારદર્શક ઉત્સવ વ્યવસ્થાપન.',
+    'landing.footer': '© 2026 Pooja Samiti. પારદર્શક ઉત્સવ વ્યવસ્થાપન.',
   },
   kn: {
     'app.tagline': 'ಪಾರದರ್ಶಕ ಹಬ್ಬ ನಿರ್ವಹಣೆ',
@@ -563,7 +563,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'ಖರ್ಚುಗಳು',
     'landing.members': 'ಸದಸ್ಯರು',
     'landing.surplus': 'ಮಿಗುಲು',
-    'landing.footer': '© 2026 SamitiBook. ಪಾರದರ್ಶಕ ಹಬ್ಬ ನಿರ್ವಹಣೆ.',
+    'landing.footer': '© 2026 Pooja Samiti. ಪಾರದರ್ಶಕ ಹಬ್ಬ ನಿರ್ವಹಣೆ.',
   },
   ml: {
     'app.tagline': 'സുതാര്യ ഉത്സവ മാനേജ്മെന്റ്',
@@ -576,7 +576,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'ചെലവുകൾ',
     'landing.members': 'അംഗങ്ങൾ',
     'landing.surplus': 'മിച്ചം',
-    'landing.footer': '© 2026 SamitiBook. സുതാര്യ ഉത്സവ മാനേജ്മെന്റ്.',
+    'landing.footer': '© 2026 Pooja Samiti. സുതാര്യ ഉത്സവ മാനേജ്മെന്റ്.',
   },
   or: {
     'app.tagline': 'ସ୍ୱଚ୍ଛ ଉତ୍ସବ ପରିଚାଳନା',
@@ -589,7 +589,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'ଖର୍ଚ୍ଚ',
     'landing.members': 'ସଦସ୍ୟ',
     'landing.surplus': 'ଅତିରିକ୍ତ',
-    'landing.footer': '© 2026 SamitiBook. ସ୍ୱଚ୍ଛ ଉତ୍ସବ ପରିଚାଳନା.',
+    'landing.footer': '© 2026 Pooja Samiti. ସ୍ୱଚ୍ଛ ଉତ୍ସବ ପରିଚାଳନା.',
   },
   pa: {
     'app.tagline': 'ਪਾਰਦਰਸ਼ੀ ਤਿਉਹਾਰ ਪ੍ਰਬੰਧਨ',
@@ -602,7 +602,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'ਖਰਚੇ',
     'landing.members': 'ਮੈਂਬਰ',
     'landing.surplus': 'ਬਚਤ',
-    'landing.footer': '© 2026 SamitiBook. ਪਾਰਦਰਸ਼ੀ ਤਿਉਹਾਰ ਪ੍ਰਬੰਧਨ.',
+    'landing.footer': '© 2026 Pooja Samiti. ਪਾਰਦਰਸ਼ੀ ਤਿਉਹਾਰ ਪ੍ਰਬੰਧਨ.',
   },
   as: {
     'app.tagline': 'স্বচ্ছ উৎসৱ পৰিচালনা',
@@ -615,7 +615,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'খৰচ',
     'landing.members': 'সদস্য',
     'landing.surplus': 'অধিক্য',
-    'landing.footer': '© 2026 SamitiBook. স্বচ্ছ উৎসৱ পৰিচালনা.',
+    'landing.footer': '© 2026 Pooja Samiti. স্বচ্ছ উৎসৱ পৰিচালনা.',
   },
   ur: {
     'app.tagline': 'شفاف تہوار انتظام',
@@ -628,7 +628,7 @@ const landingText: Partial<Record<LanguageCode, Record<string, string>>> = {
     'landing.expenses': 'اخراجات',
     'landing.members': 'اراکین',
     'landing.surplus': 'اضافی رقم',
-    'landing.footer': '© 2026 SamitiBook. شفاف تہوار انتظام۔',
+    'landing.footer': '© 2026 Pooja Samiti. شفاف تہوار انتظام۔',
   },
 };
 

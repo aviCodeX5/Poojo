@@ -35,7 +35,7 @@ const showBrowserNotification = (notification: NotificationData) => {
   const browserNotification = new Notification(notification.title, {
     body: notification.body,
     icon: notification.icon,
-    tag: 'samitibook',
+    tag: 'pooja-samiti',
     requireInteraction: true,
   });
 

@@ -15,8 +15,8 @@ export default defineConfig(({mode}) => {
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
-        name: 'SamitiBook',
-        short_name: 'SamitiBook',
+        name: 'Pooja Samiti',
+        short_name: 'Pooja Samiti',
         description: 'Transparent Festival Management',
         theme_color: '#2563eb',
         background_color: '#f6fbff',

@@ -1,8 +1,8 @@
-# SamitiBook Rebrand and Language Selector Design
+# Pooja Samiti Rebrand and Language Selector Design
 
 ## Goal
 
-Rebrand the app from PujaCommittee/Poojo-style naming to **SamitiBook** with the tagline **Transparent Festival Management**, refresh the visual system to a modern light-only blue and seagreen theme, and add an Indian-language selector for shared UI labels.
+Rebrand the app from Pooja Samiti/Pooja Samiti-style naming to **Pooja Samiti** with the tagline **Transparent Festival Management**, refresh the visual system to a modern light-only blue and seagreen theme, and add an Indian-language selector for shared UI labels.
 
 ## Scope
 
@@ -34,7 +34,7 @@ Create a simple sun logo:
 - Circular sun center.
 - Short rays or ring treatment.
 - Works at favicon size.
-- Pairs with the text **SamitiBook** in sidebar and landing surfaces.
+- Pairs with the text **Pooja Samiti** in sidebar and landing surfaces.
 
 The favicon should be updated to the same mark so browser tabs and installed PWA surfaces carry the new identity.
 
@@ -43,7 +43,7 @@ The favicon should be updated to the same mark so browser tabs and installed PWA
 Use the existing `LanguageContext` as the foundation, but clean it up:
 
 - Replace corrupted translation strings with valid Unicode.
-- Store language choice in local storage under a SamitiBook-specific key.
+- Store language choice in local storage under a Pooja Samiti-specific key.
 - Add a compact language selector in the authenticated header and on public/auth pages where practical.
 - Supported first-pass languages:
   - English
@@ -87,7 +87,7 @@ Verification should include:
 
 - Typecheck/build.
 - Existing safe E2E smoke tests.
-- A UI smoke check that confirms SamitiBook branding appears.
+- A UI smoke check that confirms Pooja Samiti branding appears.
 - A language selector smoke check that changes language and confirms at least one shared nav/action label updates.
 - Favicon/logo files are present in the build.
 

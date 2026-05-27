@@ -1,8 +1,8 @@
-# SamitiBook Rebrand and Language Implementation Plan
+# Pooja Samiti Rebrand and Language Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rebrand the app to SamitiBook, apply a light blue/seagreen visual system with a sun logo/favicon, and add first-pass Indian-language switching for shared UI labels.
+**Goal:** Rebrand the app to Pooja Samiti, apply a light blue/seagreen visual system with a sun logo/favicon, and add first-pass Indian-language switching for shared UI labels.
 
 **Architecture:** Keep the current React/Vite/Firebase structure. Add small shared brand and language components, update global theme tokens, and use the existing language context as the translation source with English fallback.
 
@@ -18,10 +18,10 @@
 
 - [ ] **Step 1: Write failing branding and language tests**
 
-Add assertions that the public landing page shows `SamitiBook`, `Transparent Festival Management`, and a language selector. Add an authenticated demo assertion that changing language updates a shared nav label.
+Add assertions that the public landing page shows `Pooja Samiti`, `Transparent Festival Management`, and a language selector. Add an authenticated demo assertion that changing language updates a shared nav label.
 
 ```ts
-await expect(page.getByText('SamitiBook').first()).toBeVisible();
+await expect(page.getByText('Pooja Samiti').first()).toBeVisible();
 await expect(page.getByText('Transparent Festival Management').first()).toBeVisible();
 await expect(page.getByLabel('Language')).toBeVisible();
 await page.getByLabel('Language').selectOption('hi');
@@ -32,7 +32,7 @@ await expect(page.getByRole('link', { name: /डैशबोर्ड/i })).toBe
 
 Run: `npm exec -- playwright test tests/example.spec.ts tests/e2e/demo.spec.ts --project=chromium --reporter=line`
 
-Expected: FAIL because SamitiBook branding and the language selector are not implemented yet.
+Expected: FAIL because Pooja Samiti branding and the language selector are not implemented yet.
 
 - [ ] **Step 3: Leave tests failing for implementation tasks**
 
@@ -59,7 +59,7 @@ export function BrandLogo({ showTagline = false, compact = false }: { showTaglin
       </div>
       {!compact && (
         <div className="leading-none">
-          <div className="text-xl font-black tracking-tight text-slate-900">SamitiBook</div>
+          <div className="text-xl font-black tracking-tight text-slate-900">Pooja Samiti</div>
           {showTagline && <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-seagreen">Transparent Festival Management</div>}
         </div>
       )}
@@ -74,7 +74,7 @@ Create `public/favicon.svg` with a blue/seagreen-safe sun mark.
 
 - [ ] **Step 3: Update document title/favicon**
 
-Set `index.html` title to `SamitiBook | Transparent Festival Management` and link `/favicon.svg`.
+Set `index.html` title to `Pooja Samiti | Transparent Festival Management` and link `/favicon.svg`.
 
 ### Task 3: Replace Theme Tokens and Remove Dark UI
 
@@ -99,7 +99,7 @@ Replace orange/red tokens with blue/seagreen/sun tokens while keeping old token 
 
 - [ ] **Step 2: Disable dark theme behavior**
 
-Make `ThemeContext` always apply `light`, keep API compatibility, and store a SamitiBook-specific key.
+Make `ThemeContext` always apply `light`, keep API compatibility, and store a Pooja Samiti-specific key.
 
 - [ ] **Step 3: Remove sidebar dark toggle**
 
@@ -158,7 +158,7 @@ Use it in `Layout` header and public/auth screens in later tasks.
 
 - [ ] **Step 1: Replace public branding**
 
-Use `BrandLogo`, `LanguageSelector`, `SamitiBook`, and `Transparent Festival Management`.
+Use `BrandLogo`, `LanguageSelector`, `Pooja Samiti`, and `Transparent Festival Management`.
 
 - [ ] **Step 2: Keep workflows unchanged**
 
@@ -177,9 +177,9 @@ Use light blue/white/seagreen styling only.
 - Modify: `src/pages/Settings.tsx`
 - Search/replace safe brand strings across `src`, `tests`, `README` if present.
 
-- [ ] **Step 1: Replace `PujaCommittee`, `Poojo`, and old taglines**
+- [ ] **Step 1: Replace `Pooja Samiti`, `Pooja Samiti`, and old taglines**
 
-Use `SamitiBook` and `Transparent Festival Management` everywhere visible.
+Use `Pooja Samiti` and `Transparent Festival Management` everywhere visible.
 
 - [ ] **Step 2: Translate shared nav labels**
 
@@ -208,7 +208,7 @@ Expected: PASS with existing large chunk warning only.
 
 - [ ] **Step 3: Search for old public branding**
 
-Run: `rg "PujaCommittee|Poojo|Committee OS|Committee Management System" src public index.html tests`
+Run: `rg "Pooja Samiti|Pooja Samiti|Committee OS|Committee Management System" src public index.html tests`
 
 Expected: no unwanted visible-brand matches.
 
@@ -218,5 +218,5 @@ Run:
 
 ```bash
 git add .
-git commit -m "Rebrand app as SamitiBook"
+git commit -m "Rebrand app as Pooja Samiti"
 ```
