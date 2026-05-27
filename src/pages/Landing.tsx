@@ -78,10 +78,10 @@ export default function Landing() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     {[
-                      ['Collections', '₹8.2L'],
-                      ['Expenses', '₹2.1L'],
-                      ['Members', '148'],
-                      ['Surplus', '₹6.1L'],
+                      [t('landing.collections'), '₹8.2L'],
+                      [t('landing.expenses'), '₹2.1L'],
+                      [t('landing.members'), '148'],
+                      [t('landing.surplus'), '₹6.1L'],
                     ].map(([label, value]) => (
                       <div key={label} className="rounded-2xl border border-white/80 bg-white p-4 shadow-sm">
                         <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{label}</div>

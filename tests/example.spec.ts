@@ -67,6 +67,18 @@ test('language selector uses readable Indian scripts and persists selection', as
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
+test('landing page content changes when Bengali is selected', async ({ page }) => {
+  await page.goto('/');
+
+  await page.getByLabel('Language').selectOption('bn');
+  await expect(page.getByText('স্বচ্ছ উৎসব ব্যবস্থাপনা').first()).toBeVisible();
+  await expect(page.getByText(/উৎসব কমিটির জন্য সহজ/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'কমিটি নিবন্ধন' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'সদস্য লগইন' })).toBeVisible();
+  await expect(page.getByText('সরাসরি সারাংশ')).toBeVisible();
+  await expect(page.getByText('সংগ্রহ', { exact: true })).toBeVisible();
+});
+
 test('member login uses mobile number and permanent code', async ({ page }) => {
   await page.goto('/member-login');
 
