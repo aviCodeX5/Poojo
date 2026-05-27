@@ -31,9 +31,9 @@ export default function Navbar() {
     { label: t('nav.dashboard'), icon: LayoutDashboard, path: `/${committeeId}/dashboard`, show: true },
     { label: t('nav.members'), icon: Users2, path: `/${committeeId}/members`, show: isAdmin },
     { label: t('nav.orgChart'), icon: Building2, path: `/${committeeId}/org-chart`, show: canViewOrgChart },
-    { label: t('nav.chandaDonations'), icon: Landmark, path: `/${committeeId}/donations`, show: hasModuleAccess('donations') || hasModuleAccess('chanda') },
-    { label: t('nav.expenses'), icon: Receipt, path: `/${committeeId}/expenses`, show: hasModuleAccess('expenses') },
-    { label: t('nav.inventory'), icon: Boxes, path: `/${committeeId}/inventory`, show: hasModuleAccess('inventory') },
+    { label: t('nav.chandaDonations'), icon: Landmark, path: `/${committeeId}/donations`, show: true },
+    { label: t('nav.expenses'), icon: Receipt, path: `/${committeeId}/expenses`, show: true },
+    { label: t('nav.inventory'), icon: Boxes, path: `/${committeeId}/inventory`, show: true },
     { label: t('nav.analytics'), icon: FilePieChart, path: `/${committeeId}/analytics`, show: true },
   ];
 
@@ -48,7 +48,7 @@ export default function Navbar() {
 
   return (
     <>
-      <aside className="hidden md:flex flex-col w-64 bg-accent text-white border-r border-accent-dark h-screen sticky top-0 shadow-2xl">
+      <aside className="hidden md:flex flex-col w-64 bg-blue-700 text-white border-r border-blue-800 h-screen sticky top-0 shadow-2xl">
         <div className="p-6">
           <BrandLogo showTagline light />
         </div>
@@ -91,7 +91,7 @@ export default function Navbar() {
           </div>
         </nav>
 
-        <div className="p-4 bg-accent-dark/50 border-t border-accent-dark space-y-3">
+        <div className="p-4 bg-blue-900/35 border-t border-blue-800 space-y-3">
           <LanguageSelector light className="w-full" />
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 rounded-full bg-blue-100 border-2 border-primary flex items-center justify-center text-accent font-black text-xs">
@@ -105,7 +105,7 @@ export default function Navbar() {
         </div>
       </aside>
 
-      <nav className="md:hidden fixed bottom-6 left-6 right-6 bg-accent border border-accent-dark z-50 h-16 px-2 flex items-center justify-between shadow-2xl rounded-2xl">
+      <nav className="md:hidden fixed bottom-6 left-6 right-6 bg-blue-700 border border-blue-800 z-50 h-16 px-2 flex items-center justify-between shadow-2xl rounded-2xl">
         {primaryNav.filter((_, i) => [0, 2, 4, 5].includes(i)).map((item) => (
           <Link
             key={item.path}

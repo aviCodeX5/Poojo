@@ -124,6 +124,8 @@ test('member can access dashboard with permanent code', async ({ page }) => {
   await page.getByRole('button', { name: /access member dashboard/i }).click();
 
   await page.waitForURL(/\/DUR-2026-KOL-0001\/dashboard$/, { timeout: 30_000 });
+  await expect(page.getByRole('dialog', { name: /welcome to pooja samiti/i })).toBeVisible();
+  await page.getByRole('button', { name: /skip tour/i }).click();
   await expect(page.getByText('Madhumita Sen')).toBeVisible();
   await expect(page.getByText('SECRETARY').first()).toBeVisible();
 });

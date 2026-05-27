@@ -6,7 +6,9 @@ import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
 import { usePermissions } from '../hooks/usePermissions';
 import { apiCreate, apiDelete, apiList, apiUpdate, apiUpdateCommittee } from '../lib/api';
-import { PujaEdition } from '../types';
+import { EditionMember, Member, PujaEdition } from '../types';
+import { ROLES } from '../constants';
+import { SuccessDialog } from '../components/ui/SuccessDialog';
 import { Plus, Calendar, DollarSign, Palette, Shield, CheckCircle2, X, Save, History } from 'lucide-react';
 
 export default function PujaEditions() {
@@ -16,6 +18,10 @@ export default function PujaEditions() {
   const [loading, setLoading] = useState(true);
   const [showNewEditionForm, setShowNewEditionForm] = useState(false);
   const [selectedEdition, setSelectedEdition] = useState<string | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [carryForwardMembers, setCarryForwardMembers] = useState(true);
+  const [memberRoles, setMemberRoles] = useState<Record<string, string>>({});
+  const [success, setSuccess] = useState<{ title: string; message: string } | null>(null);
   
   const [formData, setFormData] = useState({
     year: new Date().getFullYear(),
@@ -49,6 +55,9 @@ export default function PujaEditions() {
       if (activeEdition) {
         setSelectedEdition(activeEdition.id);
       }
+      const memberList = await apiList<Member>(id, 'members');
+      setMembers(memberList);
+      setMemberRoles(Object.fromEntries(memberList.map(m => [m.memberId, m.role])));
     } catch (error) {
       console.error('Error fetching editions:', error);
     } finally {
@@ -86,6 +95,18 @@ export default function PujaEditions() {
         currentYear: formData.year
       });
 
+      if (carryForwardMembers) {
+        await Promise.all(members.map((committeeMember) => apiCreate<EditionMember>(id, 'editionMembers', {
+          editionId: newEdition.id,
+          memberId: committeeMember.memberId,
+          role: memberRoles[committeeMember.memberId] || committeeMember.role,
+          designation: memberRoles[committeeMember.memberId] || committeeMember.role,
+          addedAt: new Date().toISOString(),
+          addedBy: member?.memberId || 'ADMIN',
+          isActive: true,
+        })));
+      }
+
       // Reset form
       setFormData({
         year: new Date().getFullYear(),
@@ -100,10 +121,15 @@ export default function PujaEditions() {
       setShowNewEditionForm(false);
       fetchEditions();
       await refreshCommittee();
-      alert('New puja edition created successfully');
+      setSuccess({
+        title: 'Edition Created',
+        message: carryForwardMembers
+          ? 'New puja edition created successfully and committee members were carried forward.'
+          : 'New puja edition created successfully.',
+      });
     } catch (error) {
       console.error('Error creating edition:', error);
-      alert('Failed to create edition');
+      setSuccess({ title: 'Edition Not Created', message: 'Failed to create edition. Please review the details and try again.' });
     }
   };
 
@@ -127,10 +153,10 @@ export default function PujaEditions() {
       setSelectedEdition(editionId);
       fetchEditions();
       await refreshCommittee();
-      alert('Current edition updated');
+      setSuccess({ title: 'Current Edition Updated', message: 'The selected puja edition is now active.' });
     } catch (error) {
       console.error('Error setting current edition:', error);
-      alert('Failed to set current edition');
+      setSuccess({ title: 'Edition Not Updated', message: 'Failed to set current edition. Please try again.' });
     }
   };
 
@@ -141,10 +167,10 @@ export default function PujaEditions() {
       const id = committee.id || committee.committeeId;
       await apiDelete(id, 'editions', editionId);
       fetchEditions();
-      alert('Edition deleted successfully');
+      setSuccess({ title: 'Edition Deleted', message: 'The puja edition was deleted successfully.' });
     } catch (error) {
       console.error('Error deleting edition:', error);
-      alert('Failed to delete edition');
+      setSuccess({ title: 'Edition Not Deleted', message: 'Failed to delete edition. Please try again.' });
     }
   };
 
@@ -240,6 +266,43 @@ export default function PujaEditions() {
                 onChange={(e) => setFormData({...formData, endDate: e.target.value})}
               />
             </div>
+            {members.length > 0 && (
+              <div className="mt-6 rounded-xl border border-blue-100 bg-white p-4">
+                <label className="flex items-center gap-3 text-sm font-black text-slate-800">
+                  <input
+                    type="checkbox"
+                    checked={carryForwardMembers}
+                    onChange={(e) => setCarryForwardMembers(e.target.checked)}
+                    className="h-4 w-4 rounded border-blue-200 text-primary"
+                  />
+                  Carry forward existing committee members
+                </label>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Keep the same committee or adjust roles before creating this edition.</p>
+                {carryForwardMembers && (
+                  <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    {members.map((committeeMember) => (
+                      <div key={committeeMember.memberId} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+                        <div className="text-sm font-black text-slate-900">{committeeMember.name}</div>
+                        <label className="mt-2 block text-xs font-bold text-slate-500" htmlFor={`role-${committeeMember.memberId}`}>
+                          Role for {committeeMember.name}
+                        </label>
+                        <select
+                          id={`role-${committeeMember.memberId}`}
+                          aria-label={`Role for ${committeeMember.name}`}
+                          value={memberRoles[committeeMember.memberId] || committeeMember.role}
+                          onChange={(e) => setMemberRoles({ ...memberRoles, [committeeMember.memberId]: e.target.value })}
+                          className="mt-1 h-10 w-full rounded-lg border border-blue-100 bg-white px-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          {ROLES.map(roleOption => (
+                            <option key={roleOption} value={roleOption}>{roleOption.replace('_', ' ')}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex gap-2 mt-4">
               <Button onClick={handleCreateEdition}>
                 <Save className="w-4 h-4 mr-2" /> Create Edition
@@ -341,6 +404,12 @@ export default function PujaEditions() {
           )}
         </div>
       </div>
+      <SuccessDialog
+        open={!!success}
+        title={success?.title || ''}
+        message={success?.message || ''}
+        onClose={() => setSuccess(null)}
+      />
     </Layout>
   );
 }

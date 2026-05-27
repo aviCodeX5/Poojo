@@ -16,7 +16,7 @@ import { exportChandaToExcel } from '../utils/excelExport';
 
 export default function Chanda() {
   const { committee, member, isAdminAccount, currentEdition } = useAuth();
-  const { role, canApprove, hasModuleAccess } = usePermissions();
+  const { role } = usePermissions();
   const [entries, setEntries] = useState<ChandaEntry[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [activeTab, setActiveTab] = useState<'approved' | 'pending'>('approved');
@@ -142,7 +142,7 @@ export default function Chanda() {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Chanda Ledger</h1>
             <p className="text-gray-500 font-medium">Record and manage contribution subscriptions</p>
           </div>
-          {hasModuleAccess('chanda') && (
+          {isAdminAccount && (
             <div className="flex gap-2">
               <Button onClick={() => setIsAdding(!isAdding)} className="h-12">
                  {isAdding ? 'Cancel' : <><Plus className="w-5 h-5 mr-2" /> Record Collection</>}
@@ -218,7 +218,7 @@ export default function Chanda() {
                            </div>
                            
                            <div className="flex gap-2">
-                              {entry.status === 'Pending' && canApprove && (
+                              {entry.status === 'Pending' && isAdminAccount && (
                                  <button onClick={() => handleApprove(entry.id!)} className="p-3 bg-green-600 text-white rounded-xl shadow-lg shadow-green-200">
                                     <Check className="w-5 h-5" />
                                  </button>

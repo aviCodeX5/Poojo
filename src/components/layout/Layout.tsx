@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { LanguageSelector } from '../language/LanguageSelector';
+import { ProductTour } from '../tour/ProductTour';
+import { UpgradeButton } from '../billing/UpgradeButton';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { committee, logout } = useAuth();
@@ -34,6 +36,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           
           <div className="flex items-center space-x-4">
             <LanguageSelector className="hidden sm:inline-flex" />
+            <UpgradeButton />
             <div className="hidden sm:flex items-center space-x-2 bg-emerald-50 text-seagreen px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200">
               <span className="w-1.5 h-1.5 bg-seagreen rounded-full animate-pulse"></span>
               <span>{t('status.online')}</span>
@@ -55,6 +58,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </div>
       </main>
+      <ProductTour />
     </div>
   );
 }

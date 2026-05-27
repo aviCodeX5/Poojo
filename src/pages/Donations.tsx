@@ -4,7 +4,6 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../hooks/useAuth';
-import { usePermissions } from '../hooks/usePermissions';
 import { apiCreate, apiList } from '../lib/api';
 import { Donation, DonationType } from '../types';
 import { Plus, Download, Share2, DollarSign, Gift, CreditCard, Landmark, FileText } from 'lucide-react';
@@ -14,8 +13,7 @@ import { generateDonationReceipt } from '../utils/receiptGenerator';
 import { cn } from '../lib/utils';
 
 export default function Donations() {
-  const { committee, member, currentEdition } = useAuth();
-  const { hasModuleAccess } = usePermissions();
+  const { committee, member, currentEdition, isAdminAccount } = useAuth();
   const [donations, setDonations] = useState<Donation[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -108,7 +106,7 @@ export default function Donations() {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Donations & Sporsors</h1>
             <p className="text-gray-500 font-medium font-sans">Track large contributions and sponsorships</p>
           </div>
-          {hasModuleAccess('donations') && (
+          {isAdminAccount && (
             <Button onClick={() => setIsAdding(!isAdding)} className="h-12">
                {isAdding ? 'Cancel' : <><Plus className="w-5 h-5 mr-2" /> Add Donation</>}
             </Button>

@@ -119,3 +119,29 @@ export async function getCurrentEdition(committee: Committee) {
   const editions = await apiList<PujaEdition>(committee.committeeId || committee.id!, 'editions');
   return editions.find(edition => edition.id === committee.currentEditionId) || null;
 }
+
+export async function createUpgradeOrder(committeeId: string) {
+  return apiRequest<{
+    keyId: string;
+    orderId: string;
+    amount: number;
+    currency: string;
+    name: string;
+    description: string;
+  }>('/api/billing/upgrade/order', {
+    method: 'POST',
+    body: JSON.stringify({ committeeId }),
+  });
+}
+
+export async function verifyUpgradePayment(payload: {
+  committeeId: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}) {
+  return apiRequest<{ ok: true; upgraded: true }>('/api/billing/upgrade/verify', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}

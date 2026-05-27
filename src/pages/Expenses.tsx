@@ -13,8 +13,8 @@ import { format } from 'date-fns';
 import { cn } from '../lib/utils';
 
 export default function Expenses() {
-  const { committee, member, currentEdition, user } = useAuth();
-  const { role, hasModuleAccess } = usePermissions();
+  const { committee, member, currentEdition, user, isAdminAccount } = useAuth();
+  const { role } = usePermissions();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -194,7 +194,7 @@ export default function Expenses() {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Expense Ledger</h1>
             <p className="text-gray-500 font-medium font-sans">Track and verify committee spending</p>
           </div>
-          {hasModuleAccess('expenses') && (
+          {isAdminAccount && (
             <Button onClick={() => setIsAdding(!isAdding)} className="h-12">
                {isAdding ? 'Cancel' : <><Plus className="w-5 h-5 mr-2" /> Record Expense</>}
             </Button>
@@ -233,7 +233,7 @@ export default function Expenses() {
                             onChange={e => setNewCategoryName(e.target.value)}
                             className="flex-1"
                           />
-                          <Button type="button" onClick={handleCreateCategory} size="sm">
+                          <Button type="button" onClick={handleCreateCategory} size="sm" disabled={!isAdminAccount}>
                             <PlusCircle className="w-4 h-4" />
                           </Button>
                           <Button type="button" variant="outline" onClick={() => setShowNewCategoryInput(false)} size="sm">

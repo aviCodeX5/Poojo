@@ -10,7 +10,8 @@
   },
   "vars": {
     "APP_URL": "https://poojasamiti.online",
-    "RESEND_FROM_EMAIL": "Pooja Samiti <no-reply@poojasamiti.online>"
+    "RESEND_FROM_EMAIL": "Pooja Samiti <no-reply@poojasamiti.online>",
+    "RAZORPAY_KEY_ID": "rzp_test_SuTbPDOQrLSNpQ"
   },
   "routes": [
     {

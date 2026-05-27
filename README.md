@@ -19,6 +19,8 @@ Server-side secrets are used by the Cloudflare Worker:
 - `CLOUDINARY_URL`: Cloudinary uploads for bills and media.
 - `RESEND_API_KEY`: Resend email provider for admin registration verification codes. Store it as a Cloudflare Worker secret.
 - `RESEND_FROM_EMAIL`: Production sender for verification emails. The default is `Pooja Samiti <no-reply@poojasamiti.online>`.
+- `RAZORPAY_KEY_ID`: Razorpay checkout key id used by the browser.
+- `RAZORPAY_KEY_SECRET`: Razorpay order and signature verification secret. Store it as a Cloudflare Worker secret.
 - `APP_URL`: deployed app URL.
 
 ## Production Email

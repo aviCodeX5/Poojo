@@ -7,6 +7,8 @@ export interface Env {
   EMAIL_VERIFICATION_DEV_MODE?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM_EMAIL?: string;
+  RAZORPAY_KEY_ID?: string;
+  RAZORPAY_KEY_SECRET?: string;
 }
 
 type CloudinaryConfig = {
@@ -78,6 +80,18 @@ async function sha256Hex(value: string) {
   return [...new Uint8Array(digest)]
     .map(byte => byte.toString(16).padStart(2, '0'))
     .join('');
+}
+
+async function hmacSha256Hex(secret: string, value: string) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(value));
+  return [...new Uint8Array(signature)].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 async function pbkdf2Hash(password: string, salt = randomToken(16), iterations = 100000) {
@@ -606,6 +620,84 @@ async function handleEmailVerificationConfirm(request: Request, env: Env) {
   return json({ ok: true, emailVerified: true });
 }
 
+async function handleUpgradeOrder(request: Request, env: Env) {
+  if (request.method !== 'POST') return errorJson('Method Not Allowed', 405);
+  const context = await getSessionContext(request, env);
+  if (!context) return errorJson('Session not found', 401);
+  if (context.session.user_type !== 'ADMIN') return errorJson('Only admins can upgrade a committee', 403);
+  if (!env.RAZORPAY_KEY_ID || !env.RAZORPAY_KEY_SECRET) return errorJson('Razorpay is not configured', 500);
+
+  const body = await readJson(request);
+  const committeeId = String(body.committeeId || '');
+  if (committeeId !== context.session.committee_id) return errorJson('Forbidden', 403);
+
+  const amount = 49900;
+  const currency = 'INR';
+  const auth = btoa(`${env.RAZORPAY_KEY_ID}:${env.RAZORPAY_KEY_SECRET}`);
+  const response = await fetch('https://api.razorpay.com/v1/orders', {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      amount,
+      currency,
+      receipt: `upgrade_${committeeId}_${Date.now()}`.slice(0, 40),
+      notes: {
+        committeeId,
+        product: 'Pooja Samiti Upgrade',
+      },
+    }),
+  });
+
+  const result: any = await response.json().catch(() => ({}));
+  if (!response.ok) return errorJson(result?.error?.description || 'Unable to create Razorpay order', response.status);
+
+  return json({
+    keyId: env.RAZORPAY_KEY_ID,
+    orderId: result.id,
+    amount,
+    currency,
+    name: 'Pooja Samiti',
+    description: 'Committee upgrade',
+  });
+}
+
+async function handleUpgradeVerify(request: Request, env: Env) {
+  if (request.method !== 'POST') return errorJson('Method Not Allowed', 405);
+  const context = await getSessionContext(request, env);
+  if (!context) return errorJson('Session not found', 401);
+  if (context.session.user_type !== 'ADMIN') return errorJson('Only admins can verify upgrades', 403);
+  if (!env.RAZORPAY_KEY_SECRET) return errorJson('Razorpay is not configured', 500);
+
+  const body = await readJson(request);
+  const committeeId = String(body.committeeId || '');
+  if (committeeId !== context.session.committee_id) return errorJson('Forbidden', 403);
+
+  const orderId = String(body.razorpay_order_id || '');
+  const paymentId = String(body.razorpay_payment_id || '');
+  const signature = String(body.razorpay_signature || '');
+  const expected = await hmacSha256Hex(env.RAZORPAY_KEY_SECRET, `${orderId}|${paymentId}`);
+  if (!orderId || !paymentId || signature !== expected) return errorJson('Payment verification failed', 400);
+
+  const now = new Date().toISOString();
+  await env.DB.prepare(`
+    INSERT INTO collection_records (committee_id, collection_name, record_id, data_json, created_at, updated_at)
+    VALUES (?, 'subscriptions', 'current', ?, ?, ?)
+    ON CONFLICT(committee_id, collection_name, record_id) DO UPDATE SET
+      data_json = excluded.data_json,
+      updated_at = excluded.updated_at
+  `).bind(
+    committeeId,
+    JSON.stringify({ id: 'current', plan: 'UPGRADED', upgraded: true, razorpayOrderId: orderId, razorpayPaymentId: paymentId, upgradedAt: now }),
+    now,
+    now,
+  ).run();
+
+  return json({ ok: true, upgraded: true });
+}
+
 async function handleD1Collection(request: Request, env: Env, url: URL) {
   const context = await getSessionContext(request, env);
   if (!context) return errorJson('Session not found', 401);
@@ -624,6 +716,10 @@ async function handleD1Collection(request: Request, env: Env, url: URL) {
   }
 
   if (!collectionName) return errorJson('Collection name is required');
+
+  if (request.method !== 'GET' && context.session.user_type !== 'ADMIN') {
+    return errorJson('Members have view-only access', 403);
+  }
 
   if (request.method === 'GET' && collectionName === 'members') {
     const result = await env.DB.prepare('SELECT * FROM members WHERE committee_id = ? ORDER BY role, name')
@@ -760,6 +856,8 @@ export default {
       if (url.pathname === '/api/auth/logout') return handleLogout(request, env);
       if (url.pathname === '/api/auth/email-verification/request') return handleEmailVerificationRequest(request, env);
       if (url.pathname === '/api/auth/email-verification/confirm') return handleEmailVerificationConfirm(request, env);
+      if (url.pathname === '/api/billing/upgrade/order') return handleUpgradeOrder(request, env);
+      if (url.pathname === '/api/billing/upgrade/verify') return handleUpgradeVerify(request, env);
       if (url.pathname.startsWith('/api/d1/committees/')) return handleD1Collection(request, env, url);
     } catch (error: any) {
       return errorJson(error?.message || 'Unexpected worker error', 500);

@@ -29,6 +29,8 @@ export default function Dashboard() {
     memberCount: 0
   });
   const [recentExpenses, setRecentExpenses] = useState<any[]>([]);
+  const [pendingChanda, setPendingChanda] = useState<any[]>([]);
+  const [expenseCategoryData, setExpenseCategoryData] = useState<Array<{ name: string; value: number }>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,9 +48,14 @@ export default function Dashboard() {
           apiList<any>(id, 'members'),
         ]);
 
-        const dTotal = donations.reduce((acc, doc) => acc + (doc.amount || 0), 0);
-        const cTotal = chanda.reduce((acc, doc) => acc + (doc.amount || 0), 0);
-        const eTotal = expenses.reduce((acc, doc) => acc + (doc.amount || 0), 0);
+        const editionFilter = (doc: any) => !currentEdition?.id || doc.editionId === currentEdition.id || doc.year === currentEdition.year;
+        const scopedDonations = donations.filter(editionFilter);
+        const scopedChanda = chanda.filter(editionFilter);
+        const scopedExpenses = expenses.filter(editionFilter);
+
+        const dTotal = scopedDonations.reduce((acc, doc) => acc + (doc.amount || 0), 0);
+        const cTotal = scopedChanda.reduce((acc, doc) => acc + (doc.amount || 0), 0);
+        const eTotal = scopedExpenses.reduce((acc, doc) => acc + (doc.amount || 0), 0);
 
         setStats({
           totalDonations: dTotal,
@@ -57,7 +64,14 @@ export default function Dashboard() {
           memberCount: members.length
         });
 
-        setRecentExpenses(expenses.sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 5));
+        setRecentExpenses(scopedExpenses.sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 5));
+        setPendingChanda(scopedChanda.filter((entry) => entry.status === 'Pending').slice(0, 4));
+        const categoryTotals = scopedExpenses.reduce((acc: Record<string, number>, expense) => {
+          const category = expense.category || 'Miscellaneous';
+          acc[category] = (acc[category] || 0) + (expense.amount || 0);
+          return acc;
+        }, {});
+        setExpenseCategoryData(Object.entries(categoryTotals).map(([name, value]) => ({ name, value })));
 
       } catch (error) {
         console.error("Dashboard data fetch error:", error);
@@ -67,20 +81,13 @@ export default function Dashboard() {
     };
 
     fetchStats();
-  }, [committee]);
+  }, [committee, currentEdition?.id]);
 
   const surplus = (stats.totalDonations + stats.totalChanda) - stats.totalExpenses;
 
   const chartData = [
     { name: 'Donations', value: stats.totalDonations },
     { name: 'Chanda', value: stats.totalChanda },
-  ];
-
-  const expenseByCategory = [
-    { name: 'Lighting', value: 4000 },
-    { name: 'Pandal', value: 12000 },
-    { name: 'Food', value: 3000 },
-    { name: 'Idol', value: 8000 },
   ];
 
   const COLORS = ['#FF6B35', '#8B1A1A', '#FF9F1C', '#2EC4B6', '#E71D36'];
@@ -97,7 +104,19 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-6">
         {/* Current Edition Display */}
-        {currentEdition && (
+        {!currentEdition ? (
+          <Card className="border-2 border-blue-200 bg-blue-50">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-xl font-black text-blue-950">Create a Puja Edition to start the flow</h2>
+                <p className="mt-1 text-sm font-semibold text-blue-700">No active edition is selected, so this dashboard avoids stale historical totals.</p>
+              </div>
+              <Button onClick={() => navigate(`/${committee?.id || committee?.committeeId}/puja-editions`)}>
+                <Calendar className="w-4 h-4 mr-2" /> Make Puja Edition
+              </Button>
+            </div>
+          </Card>
+        ) : (
           <Card className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-primary/20">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -135,13 +154,13 @@ export default function Dashboard() {
           <StatCard 
             title="Donations" 
             value={stats.totalDonations} 
-            subtitle="+14% vs last year"
+            subtitle={currentEdition ? `${currentEdition.year} edition` : 'Create edition first'}
             emoji="🏦"
           />
           <StatCard 
             title="Chanda" 
             value={stats.totalChanda} 
-            subtitle="₹85k Pending Approval"
+            subtitle={`${pendingChanda.length} pending approvals`}
             emoji="🏵️"
           />
           <StatCard 
@@ -154,7 +173,7 @@ export default function Dashboard() {
           <StatCard 
             title="Net Surplus" 
             value={surplus} 
-            subtitle="Projected: ₹9.2L"
+            subtitle={surplus >= 0 ? 'Current surplus' : 'Current deficit'}
             emoji="💰"
             isHighlighted
           />
@@ -238,26 +257,20 @@ export default function Dashboard() {
              <div className="bg-white rounded-xl border border-orange-100 overflow-hidden flex flex-col shadow-sm">
                 <div className="p-4 border-b border-orange-50 bg-orange-50/30 flex items-center justify-between">
                   <h3 className="font-black text-xs uppercase tracking-widest text-accent">Pending Approvals</h3>
-                  <span className="bg-accent text-white text-[9px] px-2 py-0.5 rounded-full font-black">04</span>
+                  <span className="bg-accent text-white text-[9px] px-2 py-0.5 rounded-full font-black">{String(pendingChanda.length).padStart(2, '0')}</span>
                 </div>
                 <div className="flex-1 divide-y divide-orange-50">
-                  <div className="p-4 hover:bg-orange-50/50 transition-colors cursor-pointer">
-                    <div className="flex justify-between items-start">
-                      <div className="text-xs font-black text-slate-800">Sumit Ganguly</div>
-                      <div className="text-[10px] font-mono font-black text-accent">₹2,500</div>
+                  {pendingChanda.length > 0 ? pendingChanda.map((entry) => (
+                    <div key={entry.id} className="p-4 hover:bg-orange-50/50 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div className="text-xs font-black text-slate-800">{entry.donorName}</div>
+                        <div className="text-[10px] font-mono font-black text-accent">₹{entry.amount.toLocaleString()}</div>
+                      </div>
+                      <p className="text-[10px] text-slate-400 font-medium mt-1">Collector: {entry.collectedBy}</p>
                     </div>
-                    <p className="text-[10px] text-slate-400 font-medium mt-1">Collector: Rajesh K.</p>
-                    <div className="flex space-x-2 mt-3">
-                      <button className="flex-1 bg-green-500 text-white text-[9px] py-1.5 rounded font-black shadow-sm active:scale-95 transition-all">APPROVE</button>
-                      <button className="flex-1 border border-slate-200 text-slate-500 text-[9px] py-1.5 rounded font-black active:scale-95 transition-all bg-white">VOID</button>
-                    </div>
-                  </div>
-                  <div className="p-4 opacity-50 bg-slate-50/30 grayscale">
-                    <div className="flex justify-between items-start">
-                      <div className="text-xs font-bold">Priya Chatterjee</div>
-                      <div className="text-[10px] font-mono font-bold">₹1,000</div>
-                    </div>
-                  </div>
+                  )) : (
+                    <div className="p-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">No pending approvals</div>
+                  )}
                 </div>
              </div>
 
@@ -267,14 +280,14 @@ export default function Dashboard() {
                    <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                          <Pie
-                           data={chartData}
+                           data={expenseCategoryData.length ? expenseCategoryData : chartData}
                            innerRadius={50}
                            outerRadius={70}
                            paddingAngle={4}
                            dataKey="value"
                            stroke="none"
                          >
-                           {chartData.map((entry, index) => (
+                           {(expenseCategoryData.length ? expenseCategoryData : chartData).map((entry, index) => (
                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                            ))}
                          </Pie>
@@ -288,7 +301,7 @@ export default function Dashboard() {
                    </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-4">
-                   {chartData.map((d, i) => (
+                   {(expenseCategoryData.length ? expenseCategoryData : chartData).map((d, i) => (
                       <div key={d.name} className="flex items-center gap-2 px-2 py-1 bg-orange-50/30 rounded-lg">
                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: COLORS[i] }} />
                          <span className="text-[10px] font-black text-slate-500 uppercase tracking-tighter truncate">{d.name}</span>
