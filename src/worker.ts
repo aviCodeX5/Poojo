@@ -1,4 +1,7 @@
 export interface Env {
+  ASSETS?: {
+    fetch(request: Request): Promise<Response>;
+  };
   CLOUDINARY_URL?: string;
   DB?: any;
   EMAIL_VERIFICATION_DEV_MODE?: string;
@@ -760,6 +763,14 @@ export default {
       if (url.pathname.startsWith('/api/d1/committees/')) return handleD1Collection(request, env, url);
     } catch (error: any) {
       return errorJson(error?.message || 'Unexpected worker error', 500);
+    }
+
+    if (url.pathname.startsWith('/api/')) {
+      return new Response('Not found', { status: 404 });
+    }
+
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
     }
 
     return new Response('Not found', { status: 404 });

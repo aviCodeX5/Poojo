@@ -74,3 +74,35 @@ test('registration uses OpenLayers map without Google Maps setup', async ({ page
   await expect(page.getByText(/OpenLayers map powered by OpenStreetMap/i)).toBeVisible();
   await expect(page.getByPlaceholder(/Search for pandal location/i)).toBeVisible();
 });
+
+test('registration map offers locate me and searchable place suggestions', async ({ page }) => {
+  await page.route('https://nominatim.openstreetmap.org/search*', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([
+        {
+          lat: '28.564300',
+          lon: '77.334200',
+          display_name: 'Noida Botanical Garden, Sector 38, Noida, Uttar Pradesh, India',
+        },
+        {
+          lat: '28.567000',
+          lon: '77.345000',
+          display_name: 'Botanical Garden Metro Station, Noida, Uttar Pradesh, India',
+        },
+      ]),
+    });
+  });
+
+  await page.goto('/register');
+
+  await expect(page.getByRole('button', { name: /locate me/i })).toBeVisible();
+  await page.getByPlaceholder(/search for pandal location/i).fill('botanical garden');
+  await expect(page.getByRole('option', { name: /noida botanical garden/i })).toBeVisible();
+  await expect(page.getByRole('option', { name: /botanical garden metro station/i })).toBeVisible();
+
+  await page.getByRole('option', { name: /noida botanical garden/i }).click();
+  await expect(page.getByText(/selected location/i)).toBeVisible();
+  await expect(page.getByText(/Noida Botanical Garden, Sector 38/i)).toBeVisible();
+});

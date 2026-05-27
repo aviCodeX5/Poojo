@@ -10,7 +10,7 @@ import Point from 'ol/geom/Point.js';
 import { fromLonLat, toLonLat } from 'ol/proj.js';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style.js';
 import 'ol/ol.css';
-import { MapPin, Navigation, Search } from 'lucide-react';
+import { Loader2, MapPin, Navigation, Search, X } from 'lucide-react';
 
 interface Location {
   lat?: number;
@@ -24,6 +24,14 @@ interface OpenLayersMapProps {
   initialLocation?: Location;
   className?: string;
 }
+
+type SearchResult = {
+  lat: string;
+  lon: string;
+  display_name: string;
+  type?: string;
+  class?: string;
+};
 
 const DEFAULT_CENTER = { lat: 22.5726, lng: 88.3639 };
 
@@ -45,12 +53,11 @@ async function reverseGeocode(lat: number, lng: number) {
   return data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 }
 
-async function searchNominatim(query: string) {
+async function searchNominatim(query: string, limit = 5) {
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=${limit}&addressdetails=1&q=${encodeURIComponent(query)}`
   );
-  const results: any[] = await response.json();
-  return results[0] || null;
+  return await response.json() as SearchResult[];
 }
 
 export default function GoogleMaps({ onLocationSelect, initialLocation, className = '' }: OpenLayersMapProps) {
@@ -59,6 +66,9 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
   const markerSourceRef = useRef(new VectorSource());
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchMessage, setSearchMessage] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(initialLocation || null);
 
   const updateSelectedLocation = (location: Location, recenter = true) => {
@@ -76,6 +86,19 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
     if (recenter && mapRef.current) {
       mapRef.current.getView().animate({ center: coordinate, zoom: 16, duration: 250 });
     }
+  };
+
+  const chooseSearchResult = (result: SearchResult) => {
+    const lat = Number(result.lat);
+    const lng = Number(result.lon);
+    updateSelectedLocation({
+      lat,
+      lng,
+      address: result.display_name || searchQuery.trim(),
+    });
+    setSearchQuery(result.display_name || searchQuery.trim());
+    setSearchResults([]);
+    setSearchMessage('');
   };
 
   useEffect(() => {
@@ -130,24 +153,51 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
     };
   }, []);
 
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 3) {
+      setSearchResults([]);
+      setSearchMessage('');
+      setSearching(false);
+      return;
+    }
+
+    let cancelled = false;
+    setSearching(true);
+    const timeout = window.setTimeout(async () => {
+      try {
+        const results = await searchNominatim(query);
+        if (cancelled) return;
+        setSearchResults(results);
+        setSearchMessage(results.length ? '' : 'No matching places found');
+      } catch {
+        if (!cancelled) {
+          setSearchResults([]);
+          setSearchMessage('Location suggestions are unavailable right now');
+        }
+      } finally {
+        if (!cancelled) setSearching(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [searchQuery]);
+
   const searchLocation = async () => {
     if (!searchQuery.trim()) return;
 
     setLoading(true);
     try {
-      const result = await searchNominatim(searchQuery.trim());
+      const [result] = await searchNominatim(searchQuery.trim(), 1);
       if (!result) {
         alert('Location not found. Please try a different search term.');
         return;
       }
 
-      const lat = Number(result.lat);
-      const lng = Number(result.lon);
-      updateSelectedLocation({
-        lat,
-        lng,
-        address: result.display_name || searchQuery.trim(),
-      });
+      chooseSearchResult(result);
     } catch {
       alert('Location search failed. Please try again.');
     } finally {
@@ -187,43 +237,93 @@ export default function GoogleMaps({ onLocationSelect, initialLocation, classNam
 
   return (
     <div className={`space-y-4 ${className}`}>
-      <div className="rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-slate-700">
-        OpenLayers map powered by OpenStreetMap. Search or click the map to select the pandal location.
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-slate-700">
+        OpenLayers map powered by OpenStreetMap. Search, use your current location, or click the map to select the pandal location.
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             placeholder="Search for pandal location..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setSearchMessage('');
+            }}
             onKeyDown={(e) => e.key === 'Enter' && searchLocation()}
+            role="combobox"
+            aria-expanded={searchResults.length > 0}
+            aria-controls="location-suggestions"
+            aria-autocomplete="list"
             className="w-full pl-10 pr-4 py-2 border border-blue-100 rounded-xl focus:ring-2 focus:ring-primary focus:outline-none"
           />
+          {searching && (
+            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-primary" />
+          )}
+          {(searchResults.length > 0 || searchMessage) && (
+            <div
+              id="location-suggestions"
+              role="listbox"
+              className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-20 overflow-hidden rounded-lg border border-blue-100 bg-white shadow-xl"
+            >
+              {searchResults.map(result => (
+                <button
+                  key={`${result.lat}-${result.lon}-${result.display_name}`}
+                  type="button"
+                  role="option"
+                  aria-selected="false"
+                  onClick={() => chooseSearchResult(result)}
+                  className="block w-full border-b border-slate-100 px-4 py-3 text-left text-sm text-slate-700 transition-colors last:border-b-0 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none"
+                >
+                  <span className="block font-semibold text-slate-900">{result.display_name.split(',')[0]}</span>
+                  <span className="mt-1 block text-xs text-slate-500">{result.display_name}</span>
+                </button>
+              ))}
+              {!searchResults.length && searchMessage && (
+                <div className="px-4 py-3 text-sm text-slate-500">{searchMessage}</div>
+              )}
+            </div>
+          )}
         </div>
         <button
           type="button"
           onClick={searchLocation}
           disabled={loading}
-          className="px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
         >
+          <Search className="h-4 w-4" />
           Search
         </button>
         <button
           type="button"
           onClick={getCurrentLocation}
           disabled={loading}
-          className="p-2 bg-accent text-white rounded-xl hover:bg-accent/90 transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-accent/90 disabled:opacity-50"
           title="Use current location"
         >
-          <Navigation className="w-4 h-4" />
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+          Locate me
         </button>
+        {searchQuery && (
+          <button
+            type="button"
+            onClick={() => {
+              setSearchQuery('');
+              setSearchResults([]);
+              setSearchMessage('');
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-3 py-2 text-sm font-bold text-slate-600 transition-colors hover:bg-blue-50"
+            aria-label="Clear location search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {selectedLocation && (
-        <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100">
           <div className="flex items-start gap-2">
             <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
             <div className="min-w-0">
