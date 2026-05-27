@@ -408,7 +408,17 @@ async function handleAdminRegisterStart(request: Request, env: Env) {
     expiresAt.toISOString(),
   ).run();
 
-  const delivery = await sendVerificationEmail(env, email, code, expiresAt.toISOString());
+  let delivery: Awaited<ReturnType<typeof sendVerificationEmail>>;
+  try {
+    delivery = await sendVerificationEmail(env, email, code, expiresAt.toISOString());
+  } catch (error: any) {
+    await db.prepare('DELETE FROM pending_admin_registrations WHERE email = ?').bind(email).run();
+    const message = String(error?.message || 'Email verification delivery failed');
+    return errorJson(
+      `Email verification could not be sent: ${message}. If you are using Resend test mode, send to the verified Resend account email or verify a sending domain in Resend.`,
+      502,
+    );
+  }
   return json({ ok: true, email, expiresAt: expiresAt.toISOString(), ...delivery });
 }
 

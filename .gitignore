@@ -17,5 +17,6 @@ firebase-applet-config.json
 
 # wrangler files
 .wrangler
+.wrangler-tail.*
 .dev.vars*
 !.dev.vars.example

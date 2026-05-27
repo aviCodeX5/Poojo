@@ -13,10 +13,14 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
 }) as typeof fetch;
 
 const fakeDb = {
+  calls: [] as string[],
   prepare() {
     return {
       bind() {
         return {
+          async first() {
+            return null;
+          },
           async run() {
             return { success: true };
           },
@@ -60,7 +64,50 @@ async function main() {
   assert(String(call.body.text).includes('verification code'), 'Expected verification text');
 }
 
+async function verifiesRegistrationEmailFailuresStayReadable() {
+  resendCalls.length = 0;
+  globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const body = init?.body ? JSON.parse(String(init.body)) : null;
+    resendCalls.push({ url: String(input), init, body });
+    return new Response(JSON.stringify({
+      message: 'You can only send testing emails to your own email address',
+    }), {
+      status: 403,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }) as typeof fetch;
+
+  const response = await worker.fetch(
+    new Request('https://samitibook.test/api/auth/admin-register/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Readable Error Committee',
+        pujaType: 'Durga',
+        city: 'Noida',
+        state: 'Uttar Pradesh',
+        pincode: '201301',
+        pandalAddress: 'Noida',
+        pandalLatLng: { lat: 28.564, lng: 77.334 },
+        email: 'someone@example.com',
+        password: 'Password123',
+        adminPhone: '9876543210',
+      }),
+    }),
+    {
+      DB: fakeDb,
+      RESEND_API_KEY: 're_test_secret',
+      RESEND_FROM_EMAIL: 'SamitiBook <onboarding@resend.dev>',
+    } as any,
+  );
+
+  const json = await response.json() as any;
+  assert(response.status === 502, `Expected 502, received ${response.status}`);
+  assert(String(json.error).includes('email'), `Expected readable email error, received ${JSON.stringify(json)}`);
+}
+
 main()
+  .then(verifiesRegistrationEmailFailuresStayReadable)
   .finally(() => {
     globalThis.fetch = originalFetch;
   })
