@@ -2,6 +2,8 @@ export interface Env {
   CLOUDINARY_URL?: string;
   DB?: any;
   EMAIL_VERIFICATION_DEV_MODE?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM_EMAIL?: string;
 }
 
 type CloudinaryConfig = {
@@ -148,6 +150,15 @@ async function readJson(request: Request) {
 function requireD1(env: Env) {
   if (!env.DB) throw new Error('D1 database is not configured');
   return env.DB;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 async function createCloudinarySignature(params: Record<string, string>, apiSecret: string) {
@@ -341,11 +352,54 @@ async function handleEmailVerificationRequest(request: Request, env: Env) {
     VALUES (?, ?, ?, ?, ?, NULL)
   `).bind(randomToken(16), email, codeHash, now.toISOString(), expiresAt.toISOString()).run();
 
+  if (env.EMAIL_VERIFICATION_DEV_MODE === 'true') {
+    return json({
+      ok: true,
+      delivery: 'development',
+      expiresAt: expiresAt.toISOString(),
+      developmentCode: code,
+    });
+  }
+
+  const resendApiKey = env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    return errorJson('Resend email provider is not configured', 500);
+  }
+
+  const from = env.RESEND_FROM_EMAIL || 'SamitiBook <onboarding@resend.dev>';
+  const resendResponse = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: email,
+      subject: 'Your SamitiBook verification code',
+      text: `Your SamitiBook verification code is ${code}. This code expires in 5 minutes. If you did not request this, ignore this email.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #0f172a; line-height: 1.5;">
+          <h2 style="margin: 0 0 12px;">SamitiBook verification</h2>
+          <p>Your verification code is:</p>
+          <p style="font-size: 28px; font-weight: 700; letter-spacing: 6px; color: #2563eb;">${escapeHtml(code)}</p>
+          <p>This code expires in 5 minutes.</p>
+          <p style="color: #64748b; font-size: 13px;">If you did not request this, you can safely ignore this email.</p>
+        </div>
+      `,
+    }),
+  });
+
+  const resendResult: any = await resendResponse.json().catch(() => ({}));
+  if (!resendResponse.ok) {
+    return errorJson(resendResult?.message || resendResult?.error?.message || 'Resend email delivery failed', 502);
+  }
+
   return json({
     ok: true,
-    delivery: 'email_provider_not_configured',
+    delivery: 'sent',
     expiresAt: expiresAt.toISOString(),
-    ...(env.EMAIL_VERIFICATION_DEV_MODE === 'true' ? { developmentCode: code } : {}),
+    emailId: resendResult?.id,
   });
 }
 
