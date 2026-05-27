@@ -11,6 +11,7 @@ import { LanguageSelector } from '../components/language/LanguageSelector';
 import GoogleMaps from '../components/GoogleMaps';
 import { useAuth } from '../hooks/useAuth';
 import { CheckCircle2, Copy, PlusCircle, X, MapPin } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const DEFAULT_PUJA_TYPES = ['Durga', 'Ganesh', 'Kali', 'Saraswati', 'Lakshmi', 'Other'];
 
@@ -60,6 +61,7 @@ export default function Register() {
   const [allPujaTypes, setAllPujaTypes] = useState<string[]>(DEFAULT_PUJA_TYPES);
   const [selectedLocation, setSelectedLocation] = useState<{ lat?: number; lng?: number; address: string } | null>(null);
   const { startRegistration, confirmRegistration } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const { register, handleSubmit, formState: { errors } } = useForm<RegisterForm>({
@@ -171,8 +173,8 @@ export default function Register() {
           <LanguageSelector />
         </div>
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase">Register Committee</h1>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">Launch your professional festival operations</p>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase">{t('register.title')}</h1>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">{t('register.subtitle')}</p>
         </div>
 
         <Card className="shadow-xl">
@@ -197,13 +199,13 @@ export default function Register() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input 
-                label="Committee Name" 
+                label={t('register.committeeName')} 
                 placeholder="e.g. Diamond Park Kali Puja"
                 {...register('name')}
                 error={errors.name?.message}
               />
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-700 ml-1">Puja Type</label>
+                <label className="block text-sm font-medium text-gray-700 ml-1">{t('register.pujaType')}</label>
                 <select
                   {...register('pujaType')}
                   onChange={(e) => {
@@ -235,10 +237,10 @@ export default function Register() {
                   </div>
                 )}
               </div>
-              <Input label="City" placeholder="Kolkata" {...register('city')} error={errors.city?.message} />
-              <Input label="State" placeholder="West Bengal" {...register('state')} error={errors.state?.message} />
-              <Input label="Pincode" placeholder="700001" {...register('pincode')} error={errors.pincode?.message} />
-              <Input label="Admin Phone" placeholder="9876543210" {...register('adminPhone')} error={errors.adminPhone?.message} />
+              <Input label={t('register.city')} placeholder="Kolkata" {...register('city')} error={errors.city?.message} />
+              <Input label={t('register.state')} placeholder="West Bengal" {...register('state')} error={errors.state?.message} />
+              <Input label={t('register.pincode')} placeholder="700001" {...register('pincode')} error={errors.pincode?.message} />
+              <Input label={t('register.adminPhone')} placeholder="9876543210" {...register('adminPhone')} error={errors.adminPhone?.message} />
             </div>
 
             <hr className="border-gray-100 my-4" />
@@ -247,10 +249,10 @@ export default function Register() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-gray-900">Pandal Location</h3>
+                <h3 className="font-bold text-gray-900">{t('register.pandalLocation')}</h3>
                 <span className="text-xs text-red-500 font-medium">*</span>
               </div>
-              <p className="text-sm text-gray-500">Click on the map or search to select your pandal location</p>
+              <p className="text-sm text-gray-500">{t('register.pandalHelp')}</p>
               <GoogleMaps 
                 onLocationSelect={(location) => setSelectedLocation(location)}
                 className="mt-4"
@@ -259,20 +261,20 @@ export default function Register() {
 
             <hr className="border-gray-100 my-4" />
             <div className="bg-gray-50 p-6 rounded-2xl space-y-4 border border-gray-100">
-              <h3 className="font-bold text-gray-900">Admin Credentials</h3>
-              <p className="text-sm text-gray-500 mb-2">Used for master access and committee oversight.</p>
+              <h3 className="font-bold text-gray-900">{t('register.adminCredentials')}</h3>
+              <p className="text-sm text-gray-500 mb-2">{t('register.adminCredentialsHelp')}</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input label="Admin Email" placeholder="admin@example.com" {...register('email')} error={errors.email?.message} />
-                <Input label="Password" type="password" {...register('password')} error={errors.password?.message} />
+                <Input label={t('auth.emailAddress')} placeholder="admin@example.com" {...register('email')} error={errors.email?.message} />
+                <Input label={t('auth.password')} type="password" {...register('password')} error={errors.password?.message} />
               </div>
             </div>
 
             <Button type="submit" size="lg" className="w-full h-14" isLoading={isSubmitting}>
-              Create Committee & Account
+              {t('register.createAccount')}
             </Button>
             
             <p className="text-center text-sm text-gray-500">
-              Already have a committee? <Link to="/login" className="text-primary font-bold">Admin Login</Link>
+              {t('register.alreadyRegistered')} <Link to="/login" className="text-primary font-bold">{t('auth.adminLogin')}</Link>
             </p>
           </form>
           )}

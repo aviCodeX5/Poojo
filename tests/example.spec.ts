@@ -46,6 +46,27 @@ test('admin login screen renders without external dependencies', async ({ page }
   await expect(page.getByLabel('Password')).toBeVisible();
 });
 
+test('language selector uses readable Indian scripts and persists selection', async ({ page }) => {
+  await page.goto('/login');
+
+  await page.getByLabel('Language').selectOption('hi');
+  await expect(page.getByRole('heading', { name: 'एडमिन पोर्टल' })).toBeVisible();
+  await expect(page.getByLabel('ईमेल पता')).toBeVisible();
+  await expect(page.getByRole('button', { name: /डैशबोर्ड खोलें/i })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'hi');
+  await expect(page.getByText(/à¤|Ø§|à¦/)).toHaveCount(0);
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'एडमिन पोर्टल' })).toBeVisible();
+
+  await page.getByLabel('Language').selectOption('ur');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByRole('heading', { name: 'ایڈمن پورٹل' })).toBeVisible();
+
+  await page.getByLabel('Language').selectOption('en');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+});
+
 test('member login uses mobile number and permanent code', async ({ page }) => {
   await page.goto('/member-login');
 

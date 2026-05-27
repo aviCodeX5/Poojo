@@ -9,6 +9,7 @@ import { Card } from '../components/ui/Card';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { LanguageSelector } from '../components/language/LanguageSelector';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -22,6 +23,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { loginWithAdminPassword } = useAuth();
+  const { t } = useLanguage();
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -51,8 +53,8 @@ export default function Login() {
           <LanguageSelector />
         </div>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none">Admin Portal</h1>
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">Master access for authorized organizers</p>
+          <h1 className="text-4xl font-black text-slate-800 tracking-tight leading-none">{t('auth.adminPortal')}</h1>
+          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-2">{t('auth.adminPortalSubtitle')}</p>
         </div>
 
         <Card className="shadow-2xl">
@@ -64,14 +66,14 @@ export default function Login() {
             )}
             
             <Input 
-              label="Email Address" 
+              label={t('auth.emailAddress')} 
               type="email" 
               placeholder="admin@samitibook.com"
               {...register('email')}
               error={errors.email?.message}
             />
             <Input 
-              label="Password" 
+              label={t('auth.password')} 
               type="password" 
               placeholder="••••••••"
               {...register('password')}
@@ -79,16 +81,16 @@ export default function Login() {
             />
             
             <Button type="submit" size="lg" className="w-full h-14" isLoading={isSubmitting}>
-              Access Dashboard
+              {t('auth.accessDashboard')}
             </Button>
             
             <div className="text-center space-y-3 mt-4">
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-widest">or</p>
+              <p className="text-xs text-gray-400 uppercase font-bold tracking-widest">{t('common.or')}</p>
               <Link to="/member-login" className="text-primary font-bold block hover:underline">
-                Login as Member with Mobile Code
+                {t('auth.memberLoginCode')}
               </Link>
               <Link to="/register" className="text-sm text-gray-600 block">
-                Need to register a new committee? <span className="text-accent font-bold">Sign Up</span>
+                {t('auth.signUpPrompt')} <span className="text-accent font-bold">{t('auth.signUp')}</span>
               </Link>
             </div>
           </form>

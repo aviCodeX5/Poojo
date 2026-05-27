@@ -6,10 +6,12 @@ import { LanguageSelector } from '../components/language/LanguageSelector';
 import { OnboardingDialog } from '../components/ui/OnboardingDialog';
 import { BarChart3, Landmark, MessageSquare, Search, ShieldCheck, Users } from 'lucide-react';
 import { motion } from 'motion/react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Landing() {
   const [activeDialog, setActiveDialog] = useState<'register' | 'member' | null>(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background-cream selection:bg-primary/20">
@@ -18,7 +20,7 @@ export default function Landing() {
         <div className="flex items-center gap-3">
           <LanguageSelector />
           <Link to="/login" className="hidden text-xs font-black uppercase tracking-widest text-accent hover:text-primary sm:inline">
-            Admin Portal Access
+            {t('landing.adminAccess')}
           </Link>
         </div>
       </header>
@@ -33,14 +35,13 @@ export default function Landing() {
               className="max-w-3xl"
             >
               <div className="mb-5 inline-flex rounded-full border border-blue-100 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-seagreen shadow-sm">
-                Transparent Festival Management
+                {t('app.tagline')}
               </div>
               <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-slate-950 md:text-7xl">
                 SamitiBook
               </h1>
               <p className="mt-6 max-w-2xl text-xl font-medium leading-relaxed text-slate-600">
-                A simple, modern operating system for festival committees to manage members, collections,
-                donations, expenses, inventory, and communications with clarity.
+                {t('landing.heroCopy')}
               </p>
 
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
@@ -49,7 +50,7 @@ export default function Landing() {
                   className="h-14 w-full px-8 text-base shadow-xl shadow-primary/15 sm:w-auto"
                   onClick={() => setActiveDialog('register')}
                 >
-                  Register Committee
+                  {t('auth.registerCommittee')}
                 </Button>
                 <Button
                   size="lg"
@@ -57,7 +58,7 @@ export default function Landing() {
                   className="h-14 w-full border-blue-100 bg-white px-8 text-base text-slate-800 hover:bg-blue-50 sm:w-auto"
                   onClick={() => setActiveDialog('member')}
                 >
-                  Member Login
+                  {t('auth.memberLogin')}
                 </Button>
               </div>
             </motion.div>
@@ -67,7 +68,7 @@ export default function Landing() {
                 <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-emerald-50 p-5">
                   <div className="mb-5 flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-black uppercase tracking-widest text-seagreen">Live Overview</div>
+                      <div className="text-xs font-black uppercase tracking-widest text-seagreen">{t('landing.liveOverview')}</div>
                       <div className="mt-1 text-2xl font-black text-slate-900">Lakeview Puja 2026</div>
                     </div>
                     <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-sun">
@@ -97,21 +98,21 @@ export default function Landing() {
         <section className="mx-auto max-w-7xl px-6 py-16">
           <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
-              <div className="text-xs font-black uppercase tracking-widest text-seagreen">Capabilities</div>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 md:text-5xl">Built for clear committee work.</h2>
+              <div className="text-xs font-black uppercase tracking-widest text-seagreen">{t('landing.capabilities')}</div>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900 md:text-5xl">{t('landing.builtFor')}</h2>
             </div>
             <Link to="/login" className="text-xs font-black uppercase tracking-widest text-accent hover:text-primary">
-              Admin Portal Access
+              {t('landing.adminAccess')}
             </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            <FeatureCard icon={<Users className="h-5 w-5" />} title="Role-Based Access" description="Give organizers the right permissions without exposing every ledger." />
-            <FeatureCard icon={<Landmark className="h-5 w-5" />} title="Finance Records" description="Track chanda, donations, expenses, and receipts in one place." />
-            <FeatureCard icon={<BarChart3 className="h-5 w-5" />} title="Simple Analytics" description="Understand collection progress, spending, and surplus quickly." />
-            <FeatureCard icon={<MessageSquare className="h-5 w-5" />} title="Broadcasts" description="Send clear updates to the committee and role groups." />
-            <FeatureCard icon={<ShieldCheck className="h-5 w-5" />} title="Secure Access" description="D1-backed sessions protect committee data." />
-            <FeatureCard icon={<Search className="h-5 w-5" />} title="Easy Lookup" description="Use committee IDs to keep demo and real workflows organized." />
+            <FeatureCard icon={<Users className="h-5 w-5" />} title={t('landing.roleAccess')} description={t('landing.roleAccessDesc')} />
+            <FeatureCard icon={<Landmark className="h-5 w-5" />} title={t('landing.financeRecords')} description={t('landing.financeRecordsDesc')} />
+            <FeatureCard icon={<BarChart3 className="h-5 w-5" />} title={t('landing.simpleAnalytics')} description={t('landing.simpleAnalyticsDesc')} />
+            <FeatureCard icon={<MessageSquare className="h-5 w-5" />} title={t('landing.broadcasts')} description={t('landing.broadcastsDesc')} />
+            <FeatureCard icon={<ShieldCheck className="h-5 w-5" />} title={t('landing.secureAccess')} description={t('landing.secureAccessDesc')} />
+            <FeatureCard icon={<Search className="h-5 w-5" />} title={t('landing.easyLookup')} description={t('landing.easyLookupDesc')} />
           </div>
         </section>
       </main>
