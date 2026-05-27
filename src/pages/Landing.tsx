@@ -120,37 +120,37 @@ export default function Landing() {
       <footer className="border-t border-blue-100 bg-white px-6 py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row">
           <BrandLogo showTagline />
-          <p className="text-xs font-bold text-slate-400">© 2026 SamitiBook. Transparent Festival Management.</p>
+          <p className="text-xs font-bold text-slate-400">{t('landing.footer')}</p>
         </div>
       </footer>
 
       <OnboardingDialog
         open={activeDialog === 'register'}
-        title="Before you register"
-        intro="Registration creates a new SamitiBook workspace for one real festival committee. Please read this before creating committee data."
+        title={t('landing.registerDialogTitle')}
+        intro={t('landing.registerDialogIntro')}
         sections={[
           {
-            title: 'What registration creates',
+            title: t('landing.registerCreatesTitle'),
             items: [
-              'A committee workspace with one primary admin account.',
-              'A place to manage members, roles, collections, donations, expenses, inventory, broadcasts, and settings.',
-              'A committee ID that members will use to identify the correct organization.',
+              t('landing.registerCreatesOne'),
+              t('landing.registerCreatesTwo'),
+              t('landing.registerCreatesThree'),
             ],
           },
           {
-            title: 'Dos and don’ts',
+            title: t('landing.dosTitle'),
             items: [
-              'Register only if you are authorized to manage this committee.',
-              'One real committee and location should not be registered more than once.',
-              'Use the correct pandal/location details so duplicate committees are not formed.',
+              t('landing.registerDosOne'),
+              t('landing.registerDosTwo'),
+              t('landing.registerDosThree'),
             ],
           },
           {
-            title: 'Roles in simple words',
+            title: t('landing.rolesTitle'),
             items: [
-              'Admin controls the committee profile, members, roles, and major settings.',
-              'Secretary, cashier, incharges, and volunteers get access based on responsibility.',
-              'Members can see information and perform actions only if their assigned role allows it.',
+              t('landing.rolesOne'),
+              t('landing.rolesTwo'),
+              t('landing.rolesThree'),
             ],
           },
         ]}
@@ -160,23 +160,23 @@ export default function Landing() {
 
       <OnboardingDialog
         open={activeDialog === 'member'}
-        title="Before member login"
-        intro="Member login is for people already added by a committee admin. Your access depends on your assigned role."
+        title={t('landing.memberDialogTitle')}
+        intro={t('landing.memberDialogIntro')}
         sections={[
           {
-            title: 'What members can see',
+            title: t('landing.memberCanSeeTitle'),
             items: [
-              'Committee details, dashboards, and activity that your role is allowed to view.',
-              'Finance, inventory, cultural, mandap, or broadcast modules only when your role permits it.',
-              'Your committee information after logging in with the phone number added by your admin.',
+              t('landing.memberCanSeeOne'),
+              t('landing.memberCanSeeTwo'),
+              t('landing.memberCanSeeThree'),
             ],
           },
           {
-            title: 'Dos and don’ts',
+            title: t('landing.dosTitle'),
             items: [
-              'Use only your own phone number added by your committee admin.',
-              'Do not share your permanent login code with anyone.',
-              'Contact your admin if your phone number is not recognized.',
+              t('landing.memberDosOne'),
+              t('landing.memberDosTwo'),
+              t('landing.memberDosThree'),
             ],
           },
         ]}

@@ -79,6 +79,33 @@ test('landing page content changes when Bengali is selected', async ({ page }) =
   await expect(page.getByText('সংগ্রহ', { exact: true })).toBeVisible();
 });
 
+test('landing page has translated hero content for every Indian language option', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'Full language matrix is enough in one browser.');
+
+  await page.goto('/');
+
+  const expectedTaglines: Array<[string, string]> = [
+    ['hi', 'पारदर्शी उत्सव प्रबंधन'],
+    ['bn', 'স্বচ্ছ উৎসব ব্যবস্থাপনা'],
+    ['ta', 'வெளிப்படையான விழா மேலாண்மை'],
+    ['te', 'పారదర్శక ఉత్సవ నిర్వహణ'],
+    ['mr', 'पारदर्शक उत्सव व्यवस्थापन'],
+    ['gu', 'પારદર્શક ઉત્સવ વ્યવસ્થાપન'],
+    ['kn', 'ಪಾರದರ್ಶಕ ಹಬ್ಬ ನಿರ್ವಹಣೆ'],
+    ['ml', 'സുതാര്യ ഉത്സവ മാനേജ്മെന്റ്'],
+    ['or', 'ସ୍ୱଚ୍ଛ ଉତ୍ସବ ପରିଚାଳନା'],
+    ['pa', 'ਪਾਰਦਰਸ਼ੀ ਤਿਉਹਾਰ ਪ੍ਰਬੰਧਨ'],
+    ['as', 'স্বচ্ছ উৎসৱ পৰিচালনা'],
+    ['ur', 'شفاف تہوار انتظام'],
+  ];
+
+  for (const [code, tagline] of expectedTaglines) {
+    await page.getByLabel('Language').selectOption(code);
+    await expect(page.getByText(tagline).first()).toBeVisible();
+    await expect(page.getByText('A simple, modern operating system for festival committees to manage members, collections, donations, expenses, inventory, and communications with clarity.')).toHaveCount(0);
+  }
+});
+
 test('member login uses mobile number and permanent code', async ({ page }) => {
   await page.goto('/member-login');
 
